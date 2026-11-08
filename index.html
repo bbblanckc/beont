@@ -129,6 +129,17 @@ svg{flex:none}
 .sebtn.on{background:var(--card);box-shadow:inset 0 0 0 2px var(--tint)}
 .wtip{text-align:center;font-size:13px;color:var(--sec);margin:6px 0 2px}
 .cal{padding:4px 8px 6px}
+.dstrip{display:flex;gap:6px;overflow-x:auto;padding:12px 14px 4px;scrollbar-width:none;scroll-behavior:smooth}
+.dstrip::-webkit-scrollbar{display:none}
+.dpill{width:50px;height:60px;flex:none;border-radius:14px;background:var(--field);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative}
+.dpill small{font-size:12px;font-weight:600;color:var(--sec)}
+.dpill b{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.dpill.on{background:var(--tint);color:var(--onTint)}
+.dpill.on small{color:var(--onTint);opacity:.8}
+.dpill i{position:absolute;bottom:6px;width:4px;height:4px;border-radius:2px}
+.dpill.more{width:auto;padding:0 12px;flex-direction:row;gap:6px;font-size:14px;font-weight:600}
+.dmon{display:flex;justify-content:space-between;align-items:center;padding:12px 18px 0;font-size:15px;font-weight:600}
+.dmon button{height:30px;padding:0 12px;border-radius:15px;background:var(--fill);font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
 .calhead{display:flex;align-items:center;gap:6px;padding:8px 6px 6px}
 .calhead b{flex:1;font-size:17px;font-weight:600}
 .calhead .nav{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--label)}
@@ -589,9 +600,9 @@ var needHome=!S.settings.home && list.some(function(x){ return x.place; });
 var mon=MN[ws.getMonth()]; var we=addDays(ws,6); if(we.getMonth()!==ws.getMonth()) mon=MN[ws.getMonth()].slice(0,3)+' – '+MN[we.getMonth()].slice(0,3);
 app.innerHTML=
 '<div class="top">'+brandHTML()+'<button class="iconbtn" data-act="settings" aria-label="Настройки">'+ic('gear',24)+'</button></div>'+
-'<div class="head"><h1 class="lt">'+dayTitle(sel)+'</h1><div class="headbtns">'+(sel!==t?'<button class="todaybtn" data-act="today">Сегодня</button>':'')+'<button class="iconbtn'+(S.monthView?' on':'')+'" data-act="monthview" aria-label="'+(S.monthView?'Показать неделю':'Показать месяц')+'" aria-pressed="'+!!S.monthView+'">'+ic('cal',22)+'</button></div></div>'+
+'<div class="head"><h1 class="lt">'+dayTitle(sel)+'</h1><div class="headbtns">'+(sel!==t?'<button class="todaybtn" data-act="today">Сегодня</button>':'')+'<button class="iconbtn" data-act="week" data-d="-1" aria-label="Предыдущий день">'+ic('left',22)+'</button><button class="iconbtn" data-act="week" data-d="1" aria-label="Следующий день">'+ic('right',22)+'</button>'+'<button class="iconbtn'+(S.monthView?' on':'')+'" data-act="monthview" aria-label="'+(S.monthView?'Скрыть календарь':'Показать календарь')+'" aria-pressed="'+!!S.monthView+'">'+ic('cal',22)+'</button></div></div>'+
 '<div class="sub">'+cap(dayLong(sel))+'</div>'+
-(S.monthView?'<div class="homecal cal">'+calHTML(S.cm||monthOf(sel),sel,'h')+'</div>':'<div class="week"><button class="arrow" data-act="week" data-d="-7" aria-label="Прошлая неделя">'+ic('left',20)+'</button><div class="days">'+days+'</div><button class="arrow" data-act="week" data-d="7" aria-label="Следующая неделя">'+ic('right',20)+'</button></div>')+
+(S.monthView?'<div class="homecal cal">'+calHTML(S.cm||monthOf(sel),sel,'h')+'</div>':'')+
 (needHome?'<div class="banner">'+ic('home',22)+'<p>Укажи дом, и я посчитаю дорогу к первому делу дня</p><button class="b" data-act="sethome">Указать</button></div>':'')+
 '<div class="list">'+body+'</div>'+
 '<button class="fab" data-act="new">'+ic('plus',22)+'Новое дело</button>';
@@ -665,7 +676,7 @@ if(list.length){ var last=list[list.length-1]; base=Math.max(base,Math.ceil((las
 return Math.min(base,23*60+30);
 }
 function openEditor(task){
-var isNew=!task; WM='start';
+var isNew=!task; WM='start'; EXP=false;
 D=task?JSON.parse(JSON.stringify(task)):{id:uid(),title:'',cat:S.settings.lastCat||'study',date:S.sel,start:defaultStart(S.sel),dur:60,place:null,mode:S.settings.mode,manual:null,done:false,note:''};
 D._new=isNew;
 var html=
@@ -746,13 +757,13 @@ return '<button class="cat'+(D.cat===c.id?' on':'')+'" style="'+catVars(c.id)+'"
 var CM=null; // month shown in editor calendar
 function monthOf(k){ var d=kdate(k); return new Date(d.getFullYear(),d.getMonth(),1); }
 function addMonths(m,n){ return new Date(m.getFullYear(),m.getMonth()+n,1); }
-function calHTML(month,selK,pre,skipId){
+function calHTML(month,selK,pre,skipId,extra){
 var t=todayKey(), first=month, off=(first.getDay()+6)%7;
 var dim=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();
 var weeks=Math.ceil((off+dim)/7), start=addDays(first,-off);
 var showToday=selK!==t||month.getMonth()!==new Date().getMonth()||month.getFullYear()!==new Date().getFullYear();
 var h='<div class="calhead"><b>'+MN[month.getMonth()]+' '+month.getFullYear()+'</b>'+
-(showToday?'<button class="tb" data-act="'+pre+'today">Сегодня</button>':'')+
+(extra||'')+(showToday&&!extra?'<button class="tb" data-act="'+pre+'today">Сегодня</button>':'')+
 '<button class="nav" data-act="'+pre+'mon" data-d="-1" aria-label="Прошлый месяц">'+ic('left',20)+'</button>'+
 '<button class="nav" data-act="'+pre+'mon" data-d="1" aria-label="Следующий месяц">'+ic('right',20)+'</button></div><div class="calgrid">';
 ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(function(w){ h+='<span class="calwd">'+w+'</span>'; });
@@ -765,10 +776,31 @@ h+='<button class="'+cls+'" data-act="'+pre+'day" data-k="'+k+'" aria-label="'+e
 }
 return h+'</div>';
 }
+var EXP=false; // editor: month calendar expanded
 function updDays(keep){
 var el=$e('f-days'); if(!el) return;
 if(keep!==false||!CM) CM=monthOf(D.date);
-el.innerHTML=calHTML(CM,D.date,'e',D.id);
+if(EXP){
+el.className='cal';
+el.innerHTML=calHTML(CM,D.date,'e',D.id,'<button class="tb" data-act="ecollapse">Лента</button>');
+return;
+}
+el.className='';
+var t=new Date(), base=addDays(t,-1), selD=kdate(D.date);
+if(selD<base) base=selD;
+var n=Math.max(45,Math.round((selD-base)/864e5)+8), h='';
+for(var i=0;i<n;i++){
+var d=addDays(base,i), k=dkey(d), lab=(k===todayKey())?'Сег':WDS[d.getDay()], has=false;
+S.tasks.forEach(function(x){ if(x.date===k&&x.id!==D.id) has=true; });
+h+='<button class="dpill'+(k===D.date?' on':'')+'" data-act="eday" data-k="'+k+'" aria-label="'+esc(dayLong(k))+'" aria-pressed="'+(k===D.date)+'"><small>'+lab+'</small><b>'+d.getDate()+'</b>'+(has?'<i style="background:'+(k===D.date?'var(--onTint)':'var(--sec)')+'"></i>':'')+'</button>';
+}
+h+='<button class="dpill more" data-act="eexpand">'+ic('cal',18)+'Календарь</button>';
+var sd=kdate(D.date);
+el.innerHTML='<div class="dmon"><span>'+MN[sd.getMonth()]+' '+sd.getFullYear()+'</span><button data-act="eexpand">'+ic('cal',16)+'Весь месяц</button></div><div class="dstrip" id="f-strip">'+h+'</div>';
+var st=el.querySelector('#f-strip');
+st.addEventListener('wheel',function(e){ if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){ st.scrollLeft+=e.deltaY; e.preventDefault(); } },{passive:false});
+var on=st.querySelector('.on');
+if(on) requestAnimationFrame(function(){ st.style.scrollBehavior='auto'; st.scrollLeft=Math.max(0,on.offsetLeft-st.clientWidth/2+25); st.style.scrollBehavior=''; });
 }
 function updTime(){
 var el=$e('f-se'); if(!el) return;
@@ -776,7 +808,7 @@ var next=D.start+D.dur>=1440;
 el.innerHTML=
 '<button class="sebtn'+(WM==='start'?' on':'')+'" data-act="wm" data-v="start" aria-pressed="'+(WM==='start')+'"><small>Начало · '+esc(dayShort(D.date))+'</small><b>'+fmt(D.start)+'</b></button>'+
 '<button class="sebtn'+(WM==='end'?' on':'')+'" data-act="wm" data-v="end" aria-pressed="'+(WM==='end')+'"><small>Конец · '+durTxt(D.dur)+(next?', ночью':'')+'</small><b>'+fmt(D.start+D.dur)+'</b></button>';
-var tip=$e('f-wtip'); if(tip) tip.textContent=WM==='start'?'Колесо меняет начало. Нажми «Конец», чтобы выбрать окончание':'Колесо меняет конец. Нажми «Начало», чтобы вернуться';
+var tip=$e('f-wtip'); if(tip) tip.textContent=WM==='start'?'Колесо меняет начало':'Колесо меняет конец';
 }
 function updDurs(){
 var el=$e('f-durs'); if(!el) return;
@@ -940,7 +972,9 @@ case 'sethome': hap('light'); openPlacePicker('home'); break;
 case 'nohome': S.settings.home=null; saveSettings(); refreshSettings(); renderHome(); break;
 case 'close': closeSheet(); break;
 case 'cat': D.cat=b.dataset.v; hap('sel'); updCats(); break;
-case 'eday': { D.date=b.dataset.k; hap('sel'); var md=kdate(D.date); updDays(md.getMonth()===CM.getMonth()?false:true); updTime(); updQuick(); updRoad(); break; }
+case 'eday': { D.date=b.dataset.k; hap('sel'); var md=kdate(D.date); updDays(EXP&&md.getMonth()===CM.getMonth()?false:true); updTime(); updQuick(); updRoad(); break; }
+case 'eexpand': EXP=true; hap('sel'); updDays(); break;
+case 'ecollapse': EXP=false; hap('sel'); updDays(); break;
 case 'emon': CM=addMonths(CM,+b.dataset.d); hap('sel'); updDays(false); break;
 case 'etoday': D.date=todayKey(); hap('sel'); updDays(); updTime(); updQuick(); updRoad(); break;
 case 'monthview': S.monthView=!S.monthView; S.cm=null; hap('sel'); renderHome(); break;
