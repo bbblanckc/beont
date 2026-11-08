@@ -433,7 +433,7 @@ if(my!==searchSeq||++done<2) return;
 var all=(res.n||[]).concat(res.p||[]), out=[];
 all.forEach(function(p){
 if(!p) return;
-for(var i=0;i<out.length;i++){ if(hav(out[i],p)<0.03&&(out[i].hn||'')===(p.hn||'')) return; }
+for(var i=0;i<out.length;i++){ if((hav(out[i],p)<0.03&&(out[i].hn||'')===(p.hn||''))||(out[i].name===p.name&&out[i].addr===p.addr)) return; }
 out.push(p);
 });
 var isEx=function(p){ return (p.hn||'').toLowerCase()===num; };
