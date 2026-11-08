@@ -400,17 +400,59 @@ if(p.city&&p.city!==name) addrParts.push(p.city);
 else if(p.state&&!p.city) addrParts.push(p.state);
 return {name:name,addr:addrParts.join(', '),lat:c[1],lon:c[0]};
 }
-var searchSeq=0;
+var searchSeq=0, lastNom=0;
+function normQ(q){
+var s=' '+q+' ';
+s=s.replace(/\s(г\.?|город)\s/gi,' ');
+s=s.replace(/\s(д\.?|дом)\s*(?=\d)/gi,' ');
+s=s.replace(/\sул\.?\s/gi,' улица ');
+s=s.replace(/\s(пр-т|просп\.?)\s/gi,' проспект ');
+s=s.replace(/\sпер\.?\s/gi,' переулок ');
+s=s.replace(/\s(корп\.?|к\.)\s*(?=\d)/gi,' к');
+return s.replace(/\s+/g,' ').trim();
+}
+function fmtNom(x){
+var a=x.address||{};
+var road=a.road||a.pedestrian||a.footway||'';
+var hn=a.house_number||'';
+var street=[road,hn].filter(Boolean).join(', ');
+var name=(x.name&&x.name!==road&&x.name!==hn)?x.name:'';
+var area=a.suburb||a.city_district||a.neighbourhood||'';
+var city=a.city||a.town||a.village||a.hamlet||'';
+var parts=[];
+if(name&&street) parts.push(street);
+if(area&&area!==city) parts.push(area);
+if(city) parts.push(city);
+return {name:name||street||String(x.display_name||'').split(',')[0],addr:parts.join(', '),lat:+x.lat,lon:+x.lon,hn:hn};
+}
 function geoSearch(q,bias,cb){
-var my=++searchSeq;
-var url='https://photon.komoot.io/api/?limit=8&q='+encodeURIComponent(q);
-if(bias) url+='&lat='+bias.lat.toFixed(4)+'&lon='+bias.lon.toFixed(4);
-fetch(url).then(function(r){ return r.json(); }).then(function(j){
+var my=++searchSeq, nq=normQ(q), num=(nq.match(/\d+[а-яa-z]?/i)||[''])[0].toLowerCase();
+var res={n:null,p:null}, done=0;
+var finish=function(){
+if(my!==searchSeq||++done<2) return;
+var all=(res.n||[]).concat(res.p||[]), out=[];
+all.forEach(function(p){
+if(!p) return;
+for(var i=0;i<out.length;i++){ if(hav(out[i],p)<0.03&&(out[i].hn||'')===(p.hn||'')) return; }
+out.push(p);
+});
+var isEx=function(p){ return (p.hn||'').toLowerCase()===num; };
+if(num) out=out.filter(isEx).concat(out.filter(function(p){ return !isEx(p); }));
+cb(out.slice(0,8),(res.n===false&&res.p===false)?'net':null,!num||out.some(isEx),num);
+};
+var wait=Math.max(0,1100-(Date.now()-lastNom));
+setTimeout(function(){
 if(my!==searchSeq) return;
-var seen={}, out=[];
-(j.features||[]).forEach(function(f){ var p=fmtPlace(f); if(!p) return; var k=p.name+'|'+p.addr; if(seen[k]) return; seen[k]=1; out.push(p); });
-cb(out,null);
-}).catch(function(){ if(my===searchSeq) cb([], 'net'); });
+lastNom=Date.now();
+var nurl='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=ru&q='+encodeURIComponent(nq);
+if(bias) nurl+='&viewbox='+(bias.lon-0.6).toFixed(3)+','+(bias.lat+0.4).toFixed(3)+','+(bias.lon+0.6).toFixed(3)+','+(bias.lat-0.4).toFixed(3);
+fetch(nurl).then(function(r){ return r.json(); }).then(function(j){ res.n=(Array.isArray(j)?j:[]).map(fmtNom); }).catch(function(){ res.n=false; }).then(finish);
+},wait);
+var purl='https://photon.komoot.io/api/?limit=8&q='+encodeURIComponent(nq);
+if(bias) purl+='&lat='+bias.lat.toFixed(4)+'&lon='+bias.lon.toFixed(4);
+fetch(purl).then(function(r){ return r.json(); }).then(function(j){
+res.p=(j.features||[]).map(function(f){ var p=fmtPlace(f); if(p) p.hn=(f.properties||{}).housenumber||''; return p; });
+}).catch(function(){ res.p=false; }).then(finish);
 }
 function reverse(lat,lon,cb){
 fetch('https://photon.komoot.io/reverse?lat='+lat+'&lon='+lon).then(function(r){ return r.json(); }).then(function(j){
@@ -788,11 +830,11 @@ var v=q.value.trim();
 if(v.length<3){ res.innerHTML=v.length?'<p class="hint">Продолжай вводить…</p>':''; return; }
 res.innerHTML='<p class="hint" style="display:flex;gap:8px;align-items:center"><span class="spin"></span>Ищу…</p>';
 tmr=setTimeout(function(){
-geoSearch(v,bias,function(list,err){
+geoSearch(v,bias,function(list,err,exact,num){
 sh._res=list;
 if(err){ res.innerHTML='<p class="hint">Не получилось найти: нет связи с поиском адресов. Попробуй ещё раз или выбери «Моё местоположение».</p>'; return; }
-if(!list.length){ res.innerHTML='<p class="hint">Ничего не нашлось. Добавь город или номер дома, например «Баумана 12 Казань».</p>'; return; }
-res.innerHTML='<div class="group">'+list.map(function(p,i){ return '<button class="row" data-act="res" data-i="'+i+'"><span class="ic">'+ic('pin',18)+'</span><span class="tx"><b>'+esc(p.name)+'</b><small>'+esc(p.addr||'')+'</small></span></button>'; }).join('')+'</div>';
+if(!list.length){ res.innerHTML='<p class="hint">Ничего не нашлось. Проверь улицу или напиши так: «Беломорская 5 Казань».</p>'; return; }
+res.innerHTML=(exact?'':'<p class="hint">Дом '+esc(num)+' не отмечен на карте. Выбери улицу или соседний дом: дорога посчитается почти так же.</p>')+'<div class="group">'+list.map(function(p,i){ return '<button class="row" data-act="res" data-i="'+i+'"><span class="ic">'+ic('pin',18)+'</span><span class="tx"><b>'+esc(p.name)+'</b><small>'+esc(p.addr||'')+'</small></span></button>'; }).join('')+'</div>';
 });
 },380);
 });
