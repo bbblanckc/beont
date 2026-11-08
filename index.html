@@ -200,6 +200,10 @@ svg{flex:none}
 .radio{width:22px;height:22px;border-radius:11px;border:2px solid var(--sep);display:flex;align-items:center;justify-content:center;flex:none}
 .radio.on{border-color:var(--tint)}
 .radio.on::after{content:"";width:10px;height:10px;border-radius:5px;background:var(--tint)}
+.sw{width:51px;height:31px;border-radius:16px;background:var(--fill);position:relative;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:14px;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:transform .2s}
+.sw.on{background:#34C759}
+.sw.on::after{transform:translateX(20px)}
 .mono{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--field);font-weight:700;font-size:15px;flex:none}
 .toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translate(-50%,20px);background:var(--tint);color:var(--onTint);padding:10px 16px;border-radius:20px;font-size:15px;font-weight:600;opacity:0;transition:all .25s ease;z-index:40;pointer-events:none;white-space:nowrap}
 .toast.in{opacity:1;transform:translate(-50%,0)}
@@ -286,6 +290,7 @@ x:'<path d="M6 6l12 12M18 6L6 18"/>',
 locate:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22"/>',
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',
 search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
 cal:'<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
 clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
 map:'<path d="M9 4L3 6.5v13.5L9 17.5l6 2.5 6-2.5V4l-6 2.5L9 4z"/><path d="M9 4v13.5M15 6.5V20"/>',
@@ -310,9 +315,12 @@ var MAPS=[
 {id:'ask',name:'Спрашивать каждый раз',mono:'?'}
 ];
 var isIOS = (tg && tg.platform==='ios') || /iPhone|iPad|iPod/.test(navigator.userAgent);
+function defNotif(){ return {on:true,leave:[30,5],noPlace:10,morning:'08:00',evening:null,quiet:null}; }
+function N(){ if(!S.settings.notif) S.settings.notif=defNotif(); return S.settings.notif; }
+var TZ=(function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Moscow'; }catch(e){ return 'Europe/Moscow'; } })();
 var S={
 tasks:[],
-settings:{home:null,maps:'yandex',mode:'car',buffer:5,lastCat:'study'},
+settings:{home:null,maps:'yandex',mode:'car',buffer:5,lastCat:'study',notif:defNotif()},
 sel:todayKey(),
 stack:[]
 };
@@ -327,11 +335,21 @@ function cloudDel(k){ if(!cloud) return; try{ cloud.removeItem(k,function(){}); 
 function slim(t){
 return {id:t.id,title:t.title.slice(0,200),cat:t.cat,date:t.date,start:t.start,dur:t.dur,
 place:t.place?{name:t.place.name.slice(0,120),addr:(t.place.addr||'').slice(0,160),lat:+t.place.lat.toFixed(6),lon:+t.place.lon.toFixed(6)}:null,
-mode:t.mode,manual:t.manual,done:!!t.done,note:(t.note||'').slice(0,1500)};
+mode:t.mode,manual:t.manual,tmin:t.tmin==null?null:t.tmin,tfrom:t.tfrom||null,done:!!t.done,note:(t.note||'').slice(0,1500)};
 }
-function saveTask(t){ cacheAll(); cloudSet('t_'+t.id,JSON.stringify(slim(t))); }
-function delTask(id){ cacheAll(); cloudDel('t_'+id); }
-function saveSettings(){ cacheAll(); cloudSet('settings',JSON.stringify(S.settings)); }
+var API='https://beont.bbblanckda.workers.dev';
+var server=!!(inTg&&tg.initData);
+function api(method,path,body){
+return fetch(API+path,{method:method,headers:{'content-type':'application/json','x-init-data':tg.initData},body:body?JSON.stringify(body):undefined}).then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); });
+}
+var srvQ=Promise.resolve(), srvWarned=false;
+function srv(method,path,body){
+if(!server) return;
+srvQ=srvQ.then(function(){ return api(method,path,body); }).catch(function(e){ console.warn('sync',e); if(!srvWarned){ srvWarned=true; toast('Нет связи с сервером, сохранено на телефоне'); } });
+}
+function saveTask(t){ cacheAll(); cloudSet('t_'+t.id,JSON.stringify(slim(t))); srv('PUT','/api/task',slim(t)); }
+function delTask(id){ cacheAll(); cloudDel('t_'+id); srv('DELETE','/api/task?id='+encodeURIComponent(id)); }
+function saveSettings(){ S.settings.tz=TZ; cacheAll(); cloudSet('settings',JSON.stringify(S.settings)); srv('PUT','/api/settings',S.settings); }
 function loadLocal(){
 try{ var a=JSON.parse(lsGet('beont_tasks')||'[]'); if(Array.isArray(a)) S.tasks=a; }catch(e){}
 try{ var s=JSON.parse(lsGet('beont_settings')||'null'); if(s) S.settings=Object.assign(S.settings,s); }catch(e){}
@@ -874,6 +892,12 @@ var t=JSON.parse(JSON.stringify(D)); var isNew=t._new; delete t._new; t.title=t.
 var i=S.tasks.findIndex(function(x){ return x.id===t.id; });
 if(i>=0) S.tasks[i]=t; else S.tasks.push(t);
 S.settings.lastCat=t.cat;
+t.tmin=null; t.tfrom=null;
+if(t.place){
+var lst=dayTasks(t.date).filter(function(x){ return x.id!==t.id; }).concat([t]).sort(function(a,b){ return a.start-b.start; });
+var o=originFor(t,lst), md=t.mode||S.settings.mode;
+if(o){ var rr=getRoute(o.place,t.place,md); if(rr){ t.tmin=rr.min; t.tfrom=o.place.lat.toFixed(4)+','+o.place.lon.toFixed(4)+'|'+md; } }
+}
 saveTask(t); saveSettings();
 S.sel=t.date;
 closeSheet(); renderHome(); hap('ok');
@@ -943,7 +967,24 @@ el.innerHTML=
 '<div class="sec-h">Открывать маршрут в</div><div class="group">'+maps.map(function(m){ var on=s.maps===m.id; return '<button class="row" data-act="maps" data-v="'+m.id+'" aria-pressed="'+on+'"><span class="mono">'+m.mono+'</span><span class="tx"><b>'+m.name+'</b></span><span class="radio'+(on?' on':'')+'"></span></button>'; }).join('')+'</div>'+
 '<div class="sec-h">Как обычно добираешься</div><div class="group" style="padding-bottom:12px"><div class="seg">'+MODES.map(function(m){ var on=s.mode===m.id; return '<button class="'+(on?'on':'')+'" data-act="defmode" data-v="'+m.id+'" aria-pressed="'+on+'">'+ic(m.id,17)+m.name+'</button>'; }).join('')+'</div></div>'+
 '<div class="sec-h">Запас времени на выход <span>сверху к дороге</span></div><div class="chips">'+[0,5,10,15].map(function(m){ var on=s.buffer===m; return '<button class="chip'+(on?' on':'')+'" data-act="buffer" data-v="'+m+'" aria-pressed="'+on+'">'+(m?m+' мин':'Без запаса')+'</button>'; }).join('')+'</div>'+
-'<p class="foot-note">'+(cloud?'Дела хранятся в облаке Телеграма и видны на всех твоих устройствах.':'Дела хранятся на этом устройстве. Открой Beont в Телеграме, чтобы они были на всех устройствах.')+'<br>Время в пути примерное и без пробок. Маршрут с пробками покажут карты.<br>Адреса и маршруты: © участники OpenStreetMap</p>';
+notifHTML()+
+'<p class="foot-note">'+(server?'Дела синхронизируются с ботом и видны на всех твоих устройствах.':'Дела хранятся на этом устройстве. Открой Beont в Телеграме, чтобы они были на всех устройствах.')+'<br>Время в пути примерное и без пробок. Маршрут с пробками покажут карты.<br>Адреса и маршруты: © участники OpenStreetMap</p>';
+}
+function chipRow(act,opts,isOn){
+return '<div class="chips">'+opts.map(function(o){ var on=isOn(o[0]); return '<button class="chip'+(on?' on':'')+'" data-act="'+act+'" data-v="'+o[0]+'" aria-pressed="'+on+'">'+o[1]+'</button>'; }).join('')+'</div>';
+}
+function notifHTML(){
+var n=N();
+var h='<div class="sec-h">Уведомления</div><div class="group"><button class="row" data-act="non" aria-pressed="'+!!n.on+'"><span class="ic">'+ic('bell',18)+'</span><span class="tx"><b>Напоминания от бота</b><small>'+(server?'Приходят в чат с ботом Beont':'Работают, когда Beont открыт в Телеграме')+'</small></span><span class="sw'+(n.on?' on':'')+'"></span></button></div>';
+if(!n.on) return h;
+h+='<div class="sec-h">Перед выходом <span>можно выбрать несколько</span></div>'+chipRow('nleave',[[60,'за 1 ч'],[30,'за 30 мин'],[15,'за 15 мин'],[5,'за 5 мин'],[0,'В момент выхода']],function(v){ return (n.leave||[]).indexOf(+v)>=0; });
+h+='<p class="hint">Пример: «Через 30 мин выходить. Пара в 10:00, КФУ. Дорога 25 мин» и кнопка «Маршрут».</p>';
+h+='<div class="sec-h">Дела без адреса</div>'+chipRow('nnp',[['','Не напоминать'],[5,'за 5 мин'],[10,'за 10 мин'],[15,'за 15 мин'],[30,'за 30 мин']],function(v){ return v===''?n.noPlace==null:n.noPlace===+v; });
+h+='<div class="sec-h">План дня утром</div>'+chipRow('nmorn',[['','Выкл'],['07:00','7:00'],['07:30','7:30'],['08:00','8:00'],['09:00','9:00']],function(v){ return (n.morning||'')===v; });
+h+='<div class="sec-h">План на завтра вечером</div>'+chipRow('nev',[['','Выкл'],['20:00','20:00'],['21:00','21:00'],['22:00','22:00']],function(v){ return (n.evening||'')===v; });
+h+='<div class="sec-h">Тихие часы <span>бот молчит</span></div>'+chipRow('nquiet',[['','Выкл'],['23:00-07:00','23:00–7:00'],['00:00-08:00','0:00–8:00'],['22:00-08:00','22:00–8:00']],function(v){ return (n.quiet?n.quiet.join('-'):'')===v; });
+h+='<p class="hint">Дела можно добавлять и сообщением боту, например: «завтра в 14 стоматолог, Беломорская 5».</p>';
+return h;
 }
 function openMapPicker(task){
 var maps=MAPS.filter(function(m){ return m.id!=='ask'&&(!m.ios||isIOS); });
@@ -1017,6 +1058,12 @@ break;
 case 'maps': S.settings.maps=b.dataset.v; saveSettings(); hap('sel'); refreshSettings(); break;
 case 'defmode': S.settings.mode=b.dataset.v; saveSettings(); hap('sel'); refreshSettings(); renderHome(); break;
 case 'buffer': S.settings.buffer=+b.dataset.v; saveSettings(); hap('sel'); refreshSettings(); renderHome(); break;
+case 'non': N().on=!N().on; saveSettings(); hap('sel'); refreshSettings(); break;
+case 'nleave': { var nl=N().leave||[], v=+b.dataset.v, ix=nl.indexOf(v); if(ix>=0) nl.splice(ix,1); else nl.push(v); nl.sort(function(a,b){ return b-a; }); N().leave=nl; saveSettings(); hap('sel'); refreshSettings(); break; }
+case 'nnp': N().noPlace=b.dataset.v===''?null:+b.dataset.v; saveSettings(); hap('sel'); refreshSettings(); break;
+case 'nmorn': N().morning=b.dataset.v||null; saveSettings(); hap('sel'); refreshSettings(); break;
+case 'nev': N().evening=b.dataset.v||null; saveSettings(); hap('sel'); refreshSettings(); break;
+case 'nquiet': N().quiet=b.dataset.v?b.dataset.v.split('-'):null; saveSettings(); hap('sel'); refreshSettings(); break;
 case 'openmap': { var tk=sh._task; closeSheet(); openUrl(routeUrl(b.dataset.v,tk.place,tk.mode||S.settings.mode)); break; }
 }
 });
@@ -1048,7 +1095,21 @@ try{ tg.onEvent('themeChanged',function(){ applyTheme(); }); }catch(e){}
 try{ tg.BackButton.onClick(function(){ closeSheet(); }); }catch(e){}
 }
 }
-loadCloud(function(){ renderHome(); });
+loadCloud(function(){
+renderHome();
+if(!server) return;
+api('GET','/api/state').then(function(st){
+if((!st.tasks||!st.tasks.length)&&S.tasks.length){
+S.settings.tz=TZ;
+return api('POST','/api/import',{tasks:S.tasks.map(slim),settings:S.settings});
+}
+S.tasks=st.tasks||[];
+S.settings=Object.assign(S.settings,st.settings||{});
+if(!S.settings.notif) S.settings.notif=defNotif();
+if(S.settings.tz!==TZ) saveSettings();
+cacheAll(); if(!S.stack.length) renderHome(); refreshSettings();
+}).catch(function(e){ console.warn('state',e); });
+});
 // refresh "past" state and today rollover each minute
 setInterval(function(){ if(!S.stack.length) renderHome(); },60000);
 }
