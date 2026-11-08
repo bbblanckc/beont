@@ -116,15 +116,20 @@ svg{flex:none}
 .titlein{width:100%;border:none;background:var(--card);border-radius:14px;padding:14px;font-size:20px;font-weight:600;outline:none;color:var(--label)}
 .titlein:focus-visible{outline:none}
 .titlein::placeholder{color:var(--sec);font-weight:500}
-.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 2px;scrollbar-width:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
 .chips::-webkit-scrollbar{display:none}
 .chip{height:38px;padding:0 14px;border-radius:19px;background:var(--card);font-size:15px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex:none;box-shadow:inset 0 0 0 1px var(--sep)}
 .chip.on{background:var(--tint);color:var(--onTint);box-shadow:none}
 .cat{height:40px;padding:0 14px 0 10px;border-radius:20px;font-size:15px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex:none;background:var(--card);color:var(--label);box-shadow:inset 0 0 0 1px var(--sep)}
 .cat.on{background:var(--c-bg);color:var(--c);box-shadow:inset 0 0 0 2px var(--c-s)}
-.sumrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:14px 14px 4px}
-.sumrow b{font-size:28px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.sumrow span{font-size:15px;color:var(--sec);text-align:right}
+.se{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px 14px 0}
+.sebtn{min-height:66px;border-radius:14px;background:var(--field);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:8px 14px;text-align:left;min-width:0}
+.sebtn small{font-size:13px;line-height:17px;color:var(--sec);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sebtn b{font-size:28px;line-height:32px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.sebtn.on{background:var(--card);box-shadow:inset 0 0 0 2px var(--tint)}
+.wtip{text-align:center;font-size:13px;color:var(--sec);margin:6px 0 2px}
+.dpick{position:relative;overflow:hidden}
+.dpick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .dstrip{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 12px;scrollbar-width:none}
 .dstrip::-webkit-scrollbar{display:none}
 .dpill{width:50px;height:60px;flex:none;border-radius:14px;background:var(--field);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
@@ -260,6 +265,7 @@ x:'<path d="M6 6l12 12M18 6L6 18"/>',
 locate:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22"/>',
 home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',
 search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+cal:'<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
 clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
 map:'<path d="M9 4L3 6.5v13.5L9 17.5l6 2.5 6-2.5V4l-6 2.5L9 4z"/><path d="M9 4v13.5M15 6.5V20"/>',
 alert:'<path d="M12 3.5l9.5 16.5h-19L12 3.5z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.3" r=".6"/>'
@@ -637,6 +643,10 @@ try{ if(!inTg||!tg.BackButton) return; if(S.stack.length) tg.BackButton.show(); 
 function topSheet(){ return S.stack.length?S.stack[S.stack.length-1].el:null; }
 /* ---------------- task editor ---------------- */
 var D=null; // draft
+var WM='start'; // which time the wheel edits: start | end
+function endMin(){ return (D.start+D.dur)%1440; }
+function setEnd(e){ var d=e-D.start; if(d<=0) d+=1440; D.dur=Math.max(5,Math.min(d,1435)); }
+function afterTime(){ updTime(); updDurs(); updQuick(); updRoad(); }
 function defaultStart(k){
 var list=dayTasks(k), t=todayKey();
 var base=600;
@@ -645,7 +655,7 @@ if(list.length){ var last=list[list.length-1]; base=Math.max(base,Math.ceil((las
 return Math.min(base,23*60+30);
 }
 function openEditor(task){
-var isNew=!task;
+var isNew=!task; WM='start';
 D=task?JSON.parse(JSON.stringify(task)):{id:uid(),title:'',cat:S.settings.lastCat||'study',date:S.sel,start:defaultStart(S.sel),dur:60,place:null,mode:S.settings.mode,manual:null,done:false,note:''};
 D._new=isNew;
 var html=
@@ -656,8 +666,8 @@ var html=
 '<div class="sec-h">Категория</div><div class="chips" id="f-cats"></div>'+
 '<div class="sec-h">Когда</div>'+
 '<div class="group">'+
-'<div class="sumrow"><b id="f-time"></b><span id="f-day"></span></div>'+
-'<div class="dstrip" id="f-days"></div>'+
+'<div class="se" id="f-se"></div>'+
+'<div class="dstrip" id="f-days"></div><div class="wtip" id="f-wtip"></div>'+
 '<div class="wheelwrap"><div class="band"></div>'+wheelCol('wh','Часы',24,1)+'<span class="colon">:</span>'+wheelCol('wm','Минуты',12,5)+'</div>'+
 '<div class="quick" id="f-quick"></div>'+
 '</div>'+
@@ -675,8 +685,17 @@ ti.addEventListener('input',function(){ D.title=ti.value; updSave(); });
 ti.addEventListener('keydown',function(e){ if(e.key==='Enter'){ ti.blur(); } });
 sh.querySelector('#f-note').addEventListener('input',function(e){ D.note=e.target.value; });
 updCats(); updDays(); updTime(); updDurs(); updQuick(); updPlace(); updSave();
-initWheel(sh.querySelector('#wh'),Math.floor(D.start/60),function(i){ D.start=i*60+D.start%60; D.manual=D.manual; updTime(); updDays(false); updQuick(); updRoad(); });
-initWheel(sh.querySelector('#wm'),Math.floor((D.start%60)/5),function(i){ D.start=Math.floor(D.start/60)*60+i*5; updTime(); updQuick(); updRoad(); });
+var ds=sh.querySelector('#f-days');
+ds.addEventListener('wheel',function(e){ if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){ ds.scrollLeft+=e.deltaY; e.preventDefault(); } },{passive:false});
+ds.addEventListener('change',function(e){ if(e.target&&e.target.type==='date'&&e.target.value){ D.date=e.target.value; hap('sel'); updDays(); updTime(); updQuick(); updRoad(); } });
+initWheel(sh.querySelector('#wh'),Math.floor(D.start/60),function(i){
+if(WM==='start') D.start=i*60+D.start%60; else setEnd(i*60+endMin()%60);
+afterTime();
+});
+initWheel(sh.querySelector('#wm'),Math.floor((D.start%60)/5),function(i){
+if(WM==='start') D.start=Math.floor(D.start/60)*60+i*5; else setEnd(Math.floor(endMin()/60)*60+i*5);
+afterTime();
+});
 if(isNew) setTimeout(function(){ try{ ti.focus({preventScroll:true}); }catch(e){} },420);
 }
 function wheelCol(id,label,n,step){
@@ -727,14 +746,17 @@ for(var i=0;i<45;i++){
 var d=addDays(base,i), k=dkey(d), lab=(k===todayKey())?'Сег':WDS[d.getDay()];
 h+='<button class="dpill'+(k===D.date?' on':'')+'" data-act="dday" data-k="'+k+'" aria-label="'+esc(dayLong(k))+'" aria-pressed="'+(k===D.date)+'"><small>'+lab+'</small><b>'+d.getDate()+'</b></button>';
 }
+h+='<label class="dpill dpick" aria-label="Выбрать дату в календаре"><small>Дата</small>'+ic('cal',18)+'<input type="date" value="'+D.date+'"></label>';
 el.innerHTML=h;
 if(scroll!==false){ var on=el.querySelector('.on'); if(on) requestAnimationFrame(function(){ el.scrollLeft=Math.max(0,on.offsetLeft-el.clientWidth/2+25); }); }
 }
 function updTime(){
-var a=$e('f-time'), b=$e('f-day'); if(!a) return;
-a.textContent=fmt(D.start)+' – '+fmt(D.start+D.dur);
-var dd=kdate(D.date);
-b.textContent=dayShort(D.date)+(D.start+D.dur>=1440?' · до утра':'')+(dd.getMonth()!==new Date().getMonth()&&D.date!==todayKey()?'':'');
+var el=$e('f-se'); if(!el) return;
+var next=D.start+D.dur>=1440;
+el.innerHTML=
+'<button class="sebtn'+(WM==='start'?' on':'')+'" data-act="wm" data-v="start" aria-pressed="'+(WM==='start')+'"><small>Начало · '+esc(dayShort(D.date))+'</small><b>'+fmt(D.start)+'</b></button>'+
+'<button class="sebtn'+(WM==='end'?' on':'')+'" data-act="wm" data-v="end" aria-pressed="'+(WM==='end')+'"><small>Конец · '+durTxt(D.dur)+(next?', ночью':'')+'</small><b>'+fmt(D.start+D.dur)+'</b></button>';
+var tip=$e('f-wtip'); if(tip) tip.textContent=WM==='start'?'Крути колесо, чтобы выбрать начало':'Крути колесо, чтобы выбрать конец';
 }
 function updDurs(){
 var el=$e('f-durs'); if(!el) return;
@@ -758,8 +780,9 @@ el.innerHTML=quickOpts().map(function(q,i){ var on=(q.k===D.date&&q.s===D.start)
 function setWheels(){
 var ed=document.getElementById('editor'); if(!ed) return;
 var wh=ed.querySelector('#wh'), wm=ed.querySelector('#wm');
-if(wh&&wh._set) wh._set(Math.floor(D.start/60));
-if(wm&&wm._set) wm._set(Math.floor((D.start%60)/5));
+var v=(WM==='start')?D.start:endMin();
+if(wh&&wh._set) wh._set(Math.floor(v/60));
+if(wm&&wm._set) wm._set(Math.floor((v%60)/5));
 }
 function updPlace(){
 var el=$e('f-place'); if(!el) return;
@@ -898,8 +921,9 @@ case 'nohome': S.settings.home=null; saveSettings(); refreshSettings(); renderHo
 case 'close': closeSheet(); break;
 case 'cat': D.cat=b.dataset.v; hap('sel'); updCats(); break;
 case 'dday': D.date=b.dataset.k; hap('sel'); updDays(false); updTime(); updQuick(); updRoad(); break;
-case 'dur': D.dur=+b.dataset.v; hap('sel'); updDurs(); updTime(); break;
-case 'quick': { var q=quickOpts()[+b.dataset.i]; if(!q) break; D.date=q.k; D.start=q.s; hap('sel'); updDays(); updTime(); updQuick(); setWheels(); updRoad(); break; }
+case 'dur': D.dur=+b.dataset.v; hap('sel'); updDurs(); updTime(); if(WM==='end') setWheels(); break;
+case 'wm': WM=b.dataset.v; hap('sel'); updTime(); setWheels(); break;
+case 'quick': { var q=quickOpts()[+b.dataset.i]; if(!q) break; D.date=q.k; D.start=q.s; WM='start'; hap('sel'); updDays(); updTime(); updQuick(); setWheels(); updRoad(); break; }
 case 'pickplace': hap('light'); openPlacePicker('task'); break;
 case 'noplace': D.place=null; D.manual=null; hap('sel'); updPlace(); break;
 case 'mode': D.mode=b.dataset.v; D.manual=null; hap('sel'); updRoad(); break;
