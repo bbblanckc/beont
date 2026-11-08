@@ -183,8 +183,10 @@ function normQ(q) {
   s = s.replace(/\sпер\.?\s/gi, ' переулок ');
   return s.replace(/\s+/g, ' ').trim();
 }
-async function geocode(q, bias) {
+const RU_TZ = /^(Europe\/(Moscow|Samara|Volgograd|Kirov|Ulyanovsk|Saratov|Astrakhan|Kaliningrad)|Asia\/(Yekaterinburg|Omsk|Novosibirsk|Barnaul|Tomsk|Novokuznetsk|Krasnoyarsk|Irkutsk|Chita|Yakutsk|Khandyga|Vladivostok|Ust-Nera|Magadan|Sakhalin|Srednekolymsk|Kamchatka|Anadyr))$/;
+async function geocode(q, bias, tz) {
   let url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&accept-language=ru&q=' + encodeURIComponent(normQ(q));
+  if (tz && RU_TZ.test(tz)) url += '&countrycodes=ru';
   if (bias) url += '&viewbox=' + (bias.lon - 0.6).toFixed(3) + ',' + (bias.lat + 0.4).toFixed(3) + ',' + (bias.lon + 0.6).toFixed(3) + ',' + (bias.lat - 0.4).toFixed(3);
   try {
     const r = await fetch(url, { headers: { 'user-agent': UA, 'accept-language': 'ru' } });
@@ -386,8 +388,9 @@ async function onUpdate(env, u) {
   const t = { id: crypto.randomUUID().replace(/-/g, '').slice(0, 12), title: p.title, cat: p.cat, date: p.date, start: p.start, dur: p.dur, place: null, mode: s.mode, manual: null, done: false, note: '' };
   let placeNote = '';
   if (p.placeQ) {
-    const bias = s.home || null;
-    const pl = await geocode(p.placeQ, bias);
+    let bias = s.home || null;
+    if (!bias) { const last = await env.DB.prepare("SELECT data FROM tasks WHERE user_id=? AND data LIKE '%\"lat\"%' ORDER BY date DESC LIMIT 1").bind(uid).first(); if (last) { try { bias = JSON.parse(last.data).place || null; } catch (e) {} } }
+    const pl = await geocode(p.placeQ, bias, s.tz);
     if (pl) t.place = pl; else placeNote = '\nАдрес «' + esc(p.placeQ) + '» не нашёл на карте, сохранил без места. Место можно добавить в приложении.';
   }
   await putTask(env, uid, t);
