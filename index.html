@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Beont</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+--bg:#F2F2F7;--card:#FFFFFF;--field:#EFEFF4;--label:#000000;--sec:#6C6C70;--sep:#D1D1D6;
+--fill:#E5E5EA;--tint:#000000;--onTint:#FFFFFF;--danger:#D70015;--warnbg:#FFF4E5;--warn:#9A4A00;
+--sheet:#F2F2F7;--shadow:0 1px 2px rgba(0,0,0,.06);
+--study:#0040DD;--study-bg:#E5EEFF;--study-s:#007AFF;
+--work:#8F4A00;--work-bg:#FFF0DB;--work-s:#FF9500;
+--personal:#7A2BA6;--personal-bg:#F4E8FB;--personal-s:#AF52DE;
+--friends:#1A6B2F;--friends-bg:#E2F6E7;--friends-s:#34C759;
+--family:#B3122F;--family-bg:#FFE6EB;--family-s:#FF2D55;
+--other:#3A3A3C;--other-bg:#E9E9ED;--other-s:#8E8E93;
+--safe-b:max(env(safe-area-inset-bottom),var(--tg-safe-area-inset-bottom,0px));
+}
+.dark{
+--bg:#000000;--card:#1C1C1E;--field:#2C2C2E;--label:#FFFFFF;--sec:#98989F;--sep:#38383A;
+--fill:#2C2C2E;--tint:#FFFFFF;--onTint:#000000;--danger:#FF6961;--warnbg:#3A2A10;--warn:#FFC266;
+--sheet:#1C1C1E;--shadow:none;
+--study:#7DB5FF;--study-bg:#132B4D;--study-s:#0A84FF;
+--work:#FFC266;--work-bg:#3D2A0E;--work-s:#FF9F0A;
+--personal:#DDA6F9;--personal-bg:#33203D;--personal-s:#BF5AF2;
+--friends:#7BE596;--friends-bg:#163A20;--friends-s:#30D158;
+--family:#FF8DA1;--family-bg:#40171F;--family-s:#FF375F;
+--other:#D1D1D6;--other-bg:#2C2C2E;--other-s:#8E8E93;
+}
+.dark .sheet{--card:#2C2C2E;--field:#3A3A3C;--fill:#3A3A3C;--sep:#48484A}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--label)}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:17px;line-height:1.3;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none;padding:0}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
+svg{flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* ---------- home ---------- */
+#app{min-height:100%;padding-bottom:calc(96px + var(--safe-b))}
+.top{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;height:52px}
+.brand{font-size:24px;line-height:30px;font-weight:800;letter-spacing:-.045em;white-space:nowrap;display:flex;align-items:center}
+.brand .ch{display:inline-block;overflow:hidden;white-space:pre;vertical-align:top;max-width:0;opacity:0;transform:translateY(45%);transition:max-width 460ms cubic-bezier(.2,.8,.2,1),opacity 320ms ease,transform 560ms cubic-bezier(.2,.8,.2,1)}
+.brand .mute{color:var(--sec)}
+.brand.open .ch{opacity:1;transform:none}
+.iconbtn{width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;color:var(--label)}
+.iconbtn:active{background:var(--fill)}
+.head{padding:4px 16px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.lt{margin:0;font-size:34px;line-height:41px;font-weight:700;letter-spacing:-.02em}
+.sub{padding:0 16px;color:var(--sec);font-size:15px;margin-top:2px}
+.todaybtn{height:32px;padding:0 14px;border-radius:16px;background:var(--fill);font-size:15px;font-weight:600;margin-bottom:5px}
+.week{margin:14px 12px 4px;display:flex;align-items:center;gap:2px}
+.week .arrow{width:32px;height:56px;display:flex;align-items:center;justify-content:center;color:var(--sec);border-radius:10px}
+.days{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.day{height:62px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.day .wd{font-size:12px;font-weight:600;color:var(--sec);text-transform:uppercase;letter-spacing:.02em}
+.day .num{width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.day.today .num{color:var(--tint);box-shadow:inset 0 0 0 1.5px var(--tint)}
+.day.on .num{background:var(--tint);color:var(--onTint);box-shadow:none}
+.day .dots{display:flex;gap:2px;height:5px}
+.day .dots i{width:5px;height:5px;border-radius:3px;display:block}
+.banner{margin:12px 16px 0;padding:12px 14px;border-radius:14px;background:var(--card);display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+.banner p{margin:0;flex:1;font-size:15px;line-height:20px}
+.banner .b{height:34px;padding:0 14px;border-radius:17px;background:var(--tint);color:var(--onTint);font-size:15px;font-weight:600;white-space:nowrap}
+.list{padding:10px 16px 0;display:flex;flex-direction:column}
+.item{display:flex;gap:10px;align-items:stretch}
+.tcol{width:46px;flex:none;padding-top:14px;display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums}
+.tcol b{font-size:16px;font-weight:600}
+.tcol span{font-size:13px;color:var(--sec);margin-top:2px}
+.card{flex:1;min-width:0;text-align:left;background:var(--card);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow)}
+.card:active{opacity:.75}
+.card .ttl{font-size:17px;font-weight:600;line-height:22px;overflow-wrap:anywhere}
+.card .meta{display:flex;align-items:center;gap:6px;font-size:15px;color:var(--sec);min-width:0}
+.card .meta span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plate{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px 0 7px;border-radius:12px;font-size:13px;font-weight:600;background:var(--c-bg);color:var(--c)}
+.check{width:44px;flex:none;display:flex;align-items:flex-start;justify-content:center;padding-top:14px}
+.check i{width:26px;height:26px;border-radius:13px;border:2px solid var(--sep);display:flex;align-items:center;justify-content:center;color:transparent}
+.item.done .check i{background:var(--c-s);border-color:var(--c-s);color:#fff}
+.item.done .ttl{text-decoration:line-through;color:var(--sec)}
+.item.past:not(.done) .card{opacity:.6}
+.road{margin:6px 0;padding:8px 10px 8px 12px;border-radius:14px;display:flex;align-items:center;gap:10px;font-size:15px;line-height:19px;color:var(--label);border:1.5px dashed var(--sep)}
+.road .txt{flex:1;min-width:0}
+.road .txt b{display:block;font-weight:600;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.road .txt small{display:block;font-size:13px;line-height:17px;color:var(--sec);margin-top:2px}
+.road.warn{border:1.5px solid transparent;background:var(--warnbg);color:var(--warn)}
+.road.warn .txt small{color:var(--warn)}
+.road .go{height:36px;padding:0 12px 0 10px;border-radius:18px;background:var(--tint);color:var(--onTint);font-size:15px;font-weight:600;flex:none;display:flex;align-items:center;gap:5px}
+.road .link{font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.gap{height:10px}
+.empty{margin:28px 16px 0;padding:28px 20px;border-radius:20px;background:var(--card);text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--shadow)}
+.empty h2{margin:6px 0 0;font-size:20px;line-height:25px}
+.empty p{margin:0;color:var(--sec);font-size:15px;line-height:21px;max-width:280px}
+.fab{position:fixed;left:16px;right:16px;bottom:calc(14px + var(--safe-b));height:54px;border-radius:27px;background:var(--tint);color:var(--onTint);display:flex;align-items:center;justify-content:center;gap:8px;font-size:17px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.18);z-index:5}
+.fab:active{transform:scale(.98)}
+/* ---------- sheets ---------- */
+.veil{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .28s ease;z-index:20}
+.veil.in{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;top:10px;background:var(--sheet);border-radius:14px 14px 0 0;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .34s cubic-bezier(.2,.9,.25,1);z-index:21;overflow:hidden}
+.sheet.in{transform:none}
+.sheet.small{top:auto;max-height:80%}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--sep);margin:6px auto 0;flex:none}
+.bar{height:50px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 8px;flex:none}
+.bar h3{margin:0;font-size:17px;font-weight:600;text-align:center}
+.bar .l{justify-self:start;height:44px;padding:0 8px;font-size:17px;color:var(--label)}
+.bar .r{justify-self:end;height:44px;padding:0 8px;font-size:17px;font-weight:600}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 24px}
+.foot{flex:none;padding:10px 16px calc(12px + var(--safe-b));background:var(--sheet)}
+.primary{width:100%;height:52px;border-radius:14px;background:var(--tint);color:var(--onTint);font-size:17px;font-weight:600}
+.primary:disabled{opacity:.35;cursor:default}
+.sec-h{margin:22px 4px 8px;font-size:13px;font-weight:600;color:var(--sec);text-transform:uppercase;letter-spacing:.03em;display:flex;justify-content:space-between;align-items:baseline}
+.sec-h span{text-transform:none;letter-spacing:0;font-weight:400}
+.group{background:var(--card);border-radius:14px;overflow:hidden}
+.titlein{width:100%;border:none;background:var(--card);border-radius:14px;padding:14px;font-size:20px;font-weight:600;outline:none;color:var(--label)}
+.titlein:focus-visible{outline:none}
+.titlein::placeholder{color:var(--sec);font-weight:500}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{height:38px;padding:0 14px;border-radius:19px;background:var(--card);font-size:15px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex:none;box-shadow:inset 0 0 0 1px var(--sep)}
+.chip.on{background:var(--tint);color:var(--onTint);box-shadow:none}
+.cat{height:40px;padding:0 14px 0 10px;border-radius:20px;font-size:15px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;flex:none;background:var(--card);color:var(--label);box-shadow:inset 0 0 0 1px var(--sep)}
+.cat.on{background:var(--c-bg);color:var(--c);box-shadow:inset 0 0 0 2px var(--c-s)}
+.sumrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:14px 14px 4px}
+.sumrow b{font-size:28px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.sumrow span{font-size:15px;color:var(--sec);text-align:right}
+.dstrip{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 12px;scrollbar-width:none}
+.dstrip::-webkit-scrollbar{display:none}
+.dpill{width:50px;height:60px;flex:none;border-radius:14px;background:var(--field);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.dpill small{font-size:12px;font-weight:600;color:var(--sec)}
+.dpill b{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.dpill.on{background:var(--tint);color:var(--onTint)}
+.dpill.on small{color:var(--onTint);opacity:.8}
+.wheelwrap{position:relative;height:200px;margin:0 14px;display:flex;justify-content:center;gap:4px}
+.wheelwrap .band{position:absolute;left:0;right:0;top:80px;height:40px;border-radius:10px;background:var(--field);pointer-events:none}
+.wheelwrap .colon{position:relative;align-self:center;font-size:24px;font-weight:600;width:14px;text-align:center}
+.wcol{position:relative;width:84px;height:200px;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(to bottom,transparent,#000 30%,#000 70%,transparent);outline:none}
+.wcol::-webkit-scrollbar{display:none}
+.wcol .pad{height:80px}
+.wcol button{display:block;width:100%;height:40px;scroll-snap-align:center;font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--sec)}
+.wcol button.act{color:var(--label);font-weight:600}
+.wcol:focus-visible{outline:2px solid var(--tint);border-radius:10px}
+.quick{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px 14px;border-top:1px solid var(--sep);margin-top:10px}
+.quick .chip{background:var(--field);box-shadow:none;height:34px;font-size:14px}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 14px;width:100%;text-align:left}
+.row+.row{border-top:1px solid var(--sep)}
+.row .ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--field);flex:none}
+.row .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.row .tx b{font-weight:500;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .tx small{font-size:14px;color:var(--sec);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .chev{color:var(--sec)}
+.row .x{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--sec)}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:2px;border-radius:10px;background:var(--fill);margin:12px 14px 0}
+.seg button{height:36px;border-radius:8px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;color:var(--label)}
+.seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.dark .seg button.on{background:#636366}
+.roadbox{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.roadbig{display:flex;align-items:center;gap:12px}
+.roadbig .n{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.roadbig .d{font-size:15px;color:var(--sec);line-height:20px}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper button{width:44px;height:36px;border-radius:10px;background:var(--field);font-size:17px;font-weight:600}
+.stepper span{font-size:14px;color:var(--sec);flex:1}
+.stepper .reset{width:auto;padding:0 10px;font-size:14px;background:none;text-decoration:underline;text-underline-offset:3px}
+.note{width:100%;min-height:80px;border:none;outline:none;resize:vertical;background:var(--card);border-radius:14px;padding:12px 14px;font-size:17px;color:var(--label)}
+.note::placeholder{color:var(--sec)}
+.danger{width:100%;height:50px;border-radius:14px;background:var(--card);color:var(--danger);font-size:17px;font-weight:600;margin-top:22px}
+.search{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border-radius:12px;background:var(--fill);margin-bottom:4px}
+.search input{flex:1;border:none;background:none;outline:none;font-size:17px;color:var(--label);min-width:0}
+.search input::-webkit-search-cancel-button{display:none}
+.search input::placeholder{color:var(--sec)}
+.hint{font-size:14px;color:var(--sec);padding:10px 4px;line-height:19px}
+.radio{width:22px;height:22px;border-radius:11px;border:2px solid var(--sep);display:flex;align-items:center;justify-content:center;flex:none}
+.radio.on{border-color:var(--tint)}
+.radio.on::after{content:"";width:10px;height:10px;border-radius:5px;background:var(--tint)}
+.mono{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--field);font-weight:700;font-size:15px;flex:none}
+.toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translate(-50%,20px);background:var(--tint);color:var(--onTint);padding:10px 16px;border-radius:20px;font-size:15px;font-weight:600;opacity:0;transition:all .25s ease;z-index:40;pointer-events:none;white-space:nowrap}
+.toast.in{opacity:1;transform:translate(-50%,0)}
+.spin{width:16px;height:16px;border-radius:8px;border:2px solid var(--sep);border-top-color:var(--label);animation:sp 0.8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.foot-note{font-size:12px;color:var(--sec);text-align:center;margin-top:18px;line-height:17px}
+@media (prefers-reduced-motion:reduce){.sheet,.veil,.brand .ch,.toast{transition:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="layers"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+var tg = (window.Telegram && window.Telegram.WebApp) || null;
+var inTg = !!(tg && tg.initData);
+/* ---------------- helpers ---------------- */
+var pad = function(n){ return String(n).padStart(2,'0'); };
+var dkey = function(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+var kdate = function(k){ var p=k.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); };
+var addDays = function(d,n){ var x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate()+n); return x; };
+var todayKey = function(){ return dkey(new Date()); };
+var nowMin = function(){ var d=new Date(); return d.getHours()*60+d.getMinutes(); };
+var fmt = function(m){ m=((m%1440)+1440)%1440; return Math.floor(m/60)+':'+pad(m%60); };
+var durTxt = function(m){ if(m<60) return m+' мин'; var h=Math.floor(m/60), r=m%60; return h+' ч'+(r?' '+r+' мин':''); };
+var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+var uid = function(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); };
+var WD=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+var WDS=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+var MG=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+var MN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+var cap = function(s){ return s.charAt(0).toUpperCase()+s.slice(1); };
+function dayTitle(k){
+var t=todayKey();
+if(k===t) return 'Сегодня';
+if(k===dkey(addDays(new Date(),1))) return 'Завтра';
+if(k===dkey(addDays(new Date(),-1))) return 'Вчера';
+return cap(WD[kdate(k).getDay()]);
+}
+function dayLong(k){ var d=kdate(k); return WD[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()]; }
+function dayShort(k){
+var t=todayKey(); if(k===t) return 'Сегодня'; if(k===dkey(addDays(new Date(),1))) return 'Завтра';
+var d=kdate(k); return WDS[d.getDay()]+', '+d.getDate()+' '+MG[d.getMonth()].slice(0,3);
+}
+function hap(kind){
+try{
+if(!tg||!tg.HapticFeedback) return;
+if(kind==='sel') tg.HapticFeedback.selectionChanged();
+else if(kind==='ok') tg.HapticFeedback.notificationOccurred('success');
+else if(kind==='warn') tg.HapticFeedback.notificationOccurred('warning');
+else tg.HapticFeedback.impactOccurred(kind||'light');
+}catch(e){}
+}
+function toast(msg){
+var el=document.getElementById('toast'); el.textContent=msg; el.classList.add('in');
+clearTimeout(toast._t); toast._t=setTimeout(function(){ el.classList.remove('in'); },2200);
+}
+function confirmBox(msg,cb){
+if(tg && inTg && tg.showConfirm){ try{ tg.showConfirm(msg,function(ok){ cb(!!ok); }); return; }catch(e){} }
+cb(window.confirm(msg));
+}
+/* ---------------- icons ---------------- */
+function ic(name,size){
+size=size||20;
+var p={
+study:'<path d="M3 9l9-4 9 4-9 4-9-4z"/><path d="M7 11v4c0 1.5 2.2 3 5 3s5-1.5 5-3v-4"/><path d="M21 9v5"/>',
+work:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/>',
+personal:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
+friends:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.8"/><path d="M17 14.2c2.7.2 4.5 2.2 4.5 5.3"/>',
+family:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
+other:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5"/>',
+car:'<path d="M5 16l1.6-5.2A2 2 0 0 1 8.5 9.4h7a2 2 0 0 1 1.9 1.4L19 16"/><rect x="3.5" y="15" width="17" height="4" rx="1.5"/><circle cx="7.5" cy="19.5" r="1.3"/><circle cx="16.5" cy="19.5" r="1.3"/>',
+transit:'<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14"/><circle cx="8.5" cy="14" r="1"/><circle cx="15.5" cy="14" r="1"/><path d="M8 17l-2 3M16 17l2 3"/>',
+walk:'<circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2.2-6.5L15 17v4"/><path d="M8.5 11l2.5-3.5 3.5 1.5 2 3.5"/><path d="M12.2 14.5L11 8"/>',
+pin:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',
+left:'<path d="M15 18l-6-6 6-6"/>',
+right:'<path d="M9 6l6 6-6 6"/>',
+check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+x:'<path d="M6 6l12 12M18 6L6 18"/>',
+locate:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22"/>',
+home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',
+search:'<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+map:'<path d="M9 4L3 6.5v13.5L9 17.5l6 2.5 6-2.5V4l-6 2.5L9 4z"/><path d="M9 4v13.5M15 6.5V20"/>',
+alert:'<path d="M12 3.5l9.5 16.5h-19L12 3.5z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.3" r=".6"/>'
+}[name]||'';
+var sw=(name==='check')?2.6:2;
+return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+}
+/* ---------------- data ---------------- */
+var CATS=[
+{id:'study',name:'Учёба'},{id:'work',name:'Работа'},{id:'personal',name:'Личное'},
+{id:'friends',name:'Друзья'},{id:'family',name:'Семья'},{id:'other',name:'Другое'}
+];
+var catName=function(id){ for(var i=0;i<CATS.length;i++) if(CATS[i].id===id) return CATS[i].name; return 'Другое'; };
+var catVars=function(id){ return '--c:var(--'+id+');--c-bg:var(--'+id+'-bg);--c-s:var(--'+id+'-s)'; };
+var MODES=[{id:'car',name:'Машина'},{id:'transit',name:'Транспорт'},{id:'walk',name:'Пешком'}];
+var MAPS=[
+{id:'yandex',name:'Яндекс Карты',mono:'Я'},
+{id:'google',name:'Google Maps',mono:'G'},
+{id:'gis',name:'2ГИС',mono:'2'},
+{id:'apple',name:'Apple Карты',mono:'A',ios:true},
+{id:'ask',name:'Спрашивать каждый раз',mono:'?'}
+];
+var isIOS = (tg && tg.platform==='ios') || /iPhone|iPad|iPod/.test(navigator.userAgent);
+var S={
+tasks:[],
+settings:{home:null,maps:'yandex',mode:'car',buffer:5,lastCat:'study'},
+sel:todayKey(),
+stack:[]
+};
+/* ---------------- storage: Telegram CloudStorage + local cache ---------------- */
+var cloud = (inTg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9')) ? tg.CloudStorage : null;
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function cacheAll(){ lsSet('beont_tasks',JSON.stringify(S.tasks)); lsSet('beont_settings',JSON.stringify(S.settings)); }
+function cloudSet(k,v){ if(!cloud) return; try{ cloud.setItem(k,v,function(err){ if(err) console.warn('cloud set',err); }); }catch(e){} }
+function cloudDel(k){ if(!cloud) return; try{ cloud.removeItem(k,function(){}); }catch(e){} }
+function slim(t){
+return {id:t.id,title:t.title.slice(0,200),cat:t.cat,date:t.date,start:t.start,dur:t.dur,
+place:t.place?{name:t.place.name.slice(0,120),addr:(t.place.addr||'').slice(0,160),lat:+t.place.lat.toFixed(6),lon:+t.place.lon.toFixed(6)}:null,
+mode:t.mode,manual:t.manual,done:!!t.done,note:(t.note||'').slice(0,1500)};
+}
+function saveTask(t){ cacheAll(); cloudSet('t_'+t.id,JSON.stringify(slim(t))); }
+function delTask(id){ cacheAll(); cloudDel('t_'+id); }
+function saveSettings(){ cacheAll(); cloudSet('settings',JSON.stringify(S.settings)); }
+function loadLocal(){
+try{ var a=JSON.parse(lsGet('beont_tasks')||'[]'); if(Array.isArray(a)) S.tasks=a; }catch(e){}
+try{ var s=JSON.parse(lsGet('beont_settings')||'null'); if(s) S.settings=Object.assign(S.settings,s); }catch(e){}
+}
+function loadCloud(done){
+if(!cloud){ done(); return; }
+try{
+cloud.getKeys(function(err,keys){
+if(err||!keys){ done(); return; }
+if(!keys.length){
+// first run in Telegram: push whatever is cached locally
+S.tasks.forEach(function(t){ cloudSet('t_'+t.id,JSON.stringify(slim(t))); });
+done(); return;
+}
+var batches=[], i;
+for(i=0;i<keys.length;i+=50) batches.push(keys.slice(i,i+50));
+var tasks=[], settings=null, left=batches.length;
+batches.forEach(function(b){
+cloud.getItems(b,function(e2,vals){
+if(!e2&&vals){
+Object.keys(vals).forEach(function(k){
+try{
+if(!vals[k]) return;
+var v=JSON.parse(vals[k]);
+if(k==='settings') settings=v; else if(k.indexOf('t_')===0) tasks.push(v);
+}catch(x){}
+});
+}
+if(--left===0){
+S.tasks=tasks; if(settings) S.settings=Object.assign(S.settings,settings);
+cacheAll(); done();
+}
+});
+});
+});
+}catch(e){ done(); }
+}
+/* ---------------- geo: search, routes ---------------- */
+var routeCache={};
+try{ routeCache=JSON.parse(lsGet('beont_routes')||'{}')||{}; }catch(e){ routeCache={}; }
+function hav(a,b){
+var R=6371, toR=Math.PI/180, dLa=(b.lat-a.lat)*toR, dLo=(b.lon-a.lon)*toR;
+var x=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a.lat*toR)*Math.cos(b.lat*toR)*Math.sin(dLo/2)*Math.sin(dLo/2);
+return 2*R*Math.asin(Math.sqrt(x));
+}
+function estimate(from,to,mode,roadKm){
+var km=roadKm||hav(from,to)*1.35;
+if(mode==='walk') return Math.max(1,Math.round(km/4.7*60));
+if(mode==='transit') return Math.max(5,Math.round(8+km/17*60));
+return Math.max(2,Math.round(4+km/28*60));
+}
+function rKey(from,to,mode){ return mode+'|'+from.lat.toFixed(4)+','+from.lon.toFixed(4)+'|'+to.lat.toFixed(4)+','+to.lon.toFixed(4); }
+var pending={};
+function getRoute(from,to,mode,cb){
+var k=rKey(from,to,mode);
+if(routeCache[k]) return routeCache[k];
+if(hav(from,to)<0.08){ routeCache[k]={min:1,approx:false}; return routeCache[k]; }
+if(!pending[k]){
+pending[k]=[];
+var prof=(mode==='walk')?'routed-foot':'routed-car';
+var url='https://routing.openstreetmap.de/'+prof+'/route/v1/driving/'+from.lon+','+from.lat+';'+to.lon+','+to.lat+'?overview=false';
+var ctl=('AbortController' in window)?new AbortController():null;
+var tm=setTimeout(function(){ if(ctl) ctl.abort(); },8000);
+fetch(url,ctl?{signal:ctl.signal}:{}).then(function(r){ return r.json(); }).then(function(j){
+clearTimeout(tm);
+var rt=j&&j.routes&&j.routes[0]; if(!rt) throw new Error('no route');
+var km=rt.distance/1000, min;
+if(mode==='car') min=Math.max(2,Math.round(rt.duration/60*1.25+2));
+else if(mode==='walk') min=Math.max(1,Math.round(rt.duration/60));
+else min=estimate(from,to,'transit',km);
+routeCache[k]={min:min,approx:mode==='transit',km:Math.round(km*10)/10};
+}).catch(function(){
+clearTimeout(tm);
+routeCache[k]={min:estimate(from,to,mode),approx:true,fallback:true};
+}).then(function(){
+lsSet('beont_routes',JSON.stringify(routeCache));
+var cbs=pending[k]; delete pending[k];
+cbs.forEach(function(f){ try{ f(); }catch(e){} });
+});
+}
+if(cb) pending[k].push(cb);
+return null;
+}
+function fmtPlace(f){
+var p=f.properties||{}, c=f.geometry&&f.geometry.coordinates;
+if(!c) return null;
+var street=[p.street,p.housenumber].filter(Boolean).join(', ');
+var name=p.name||street||p.city||'Точка на карте';
+var addrParts=[];
+if(p.name&&street) addrParts.push(street);
+if(p.district&&p.district!==name) addrParts.push(p.district);
+if(p.city&&p.city!==name) addrParts.push(p.city);
+else if(p.state&&!p.city) addrParts.push(p.state);
+return {name:name,addr:addrParts.join(', '),lat:c[1],lon:c[0]};
+}
+var searchSeq=0;
+function geoSearch(q,bias,cb){
+var my=++searchSeq;
+var url='https://photon.komoot.io/api/?limit=8&q='+encodeURIComponent(q);
+if(bias) url+='&lat='+bias.lat.toFixed(4)+'&lon='+bias.lon.toFixed(4);
+fetch(url).then(function(r){ return r.json(); }).then(function(j){
+if(my!==searchSeq) return;
+var seen={}, out=[];
+(j.features||[]).forEach(function(f){ var p=fmtPlace(f); if(!p) return; var k=p.name+'|'+p.addr; if(seen[k]) return; seen[k]=1; out.push(p); });
+cb(out,null);
+}).catch(function(){ if(my===searchSeq) cb([], 'net'); });
+}
+function reverse(lat,lon,cb){
+fetch('https://photon.komoot.io/reverse?lat='+lat+'&lon='+lon).then(function(r){ return r.json(); }).then(function(j){
+var f=j.features&&j.features[0]; var p=f?fmtPlace(f):null;
+cb(p?{name:p.name,addr:p.addr,lat:lat,lon:lon}:{name:'Моё местоположение',addr:'',lat:lat,lon:lon});
+}).catch(function(){ cb({name:'Моё местоположение',addr:'',lat:lat,lon:lon}); });
+}
+function myLocation(cb){
+var browser=function(){
+if(!navigator.geolocation){ cb(null,'Геолокация недоступна на этом устройстве'); return; }
+navigator.geolocation.getCurrentPosition(function(p){ cb({lat:p.coords.latitude,lon:p.coords.longitude}); },
+function(){ cb(null,'Нет доступа к геопозиции. Разреши его в настройках'); },{enableHighAccuracy:true,timeout:10000});
+};
+try{
+if(inTg && tg.LocationManager && tg.isVersionAtLeast('8.0')){
+var lm=tg.LocationManager;
+var go=function(){
+if(!lm.isLocationAvailable){ browser(); return; }
+lm.getLocation(function(d){
+if(d) cb({lat:d.latitude,lon:d.longitude});
+else cb(null,'Нет доступа к геопозиции. Разреши его в настройках бота');
+});
+};
+if(lm.isInited) go(); else lm.init(go);
+return;
+}
+}catch(e){}
+browser();
+}
+function routeUrl(app,to,mode){
+var t=to.lat+','+to.lon;
+if(app==='google') return 'https://www.google.com/maps/dir/?api=1&destination='+t+'&travelmode='+({car:'driving',transit:'transit',walk:'walking'}[mode]);
+if(app==='gis') return 'https://2gis.ru/routeSearch/rsType/'+({car:'car',transit:'bus',walk:'pedestrian'}[mode])+'/to/'+to.lon+','+to.lat;
+if(app==='apple') return 'https://maps.apple.com/?daddr='+t+'&dirflg='+({car:'d',transit:'r',walk:'w'}[mode]);
+return 'https://yandex.ru/maps/?rtext=~'+t+'&rtt='+({car:'auto',transit:'mt',walk:'pd'}[mode]);
+}
+function openUrl(u){
+try{ if(inTg && tg.openLink){ tg.openLink(u); return; } }catch(e){}
+window.open(u,'_blank','noopener');
+}
+function openRoute(task){
+if(!task.place) return;
+hap('light');
+var app=S.settings.maps;
+if(app==='apple'&&!isIOS) app='yandex';
+if(app==='ask'){ openMapPicker(task); return; }
+openUrl(routeUrl(app,task.place,task.mode||S.settings.mode));
+}
+/* ---------------- day logic ---------------- */
+function dayTasks(k){ return S.tasks.filter(function(t){ return t.date===k; }).sort(function(a,b){ return a.start-b.start||a.title.localeCompare(b.title); }); }
+function originFor(task,list){
+// nearest earlier task (same day) with a place, else home
+var prev=null;
+for(var i=0;i<list.length;i++){
+var t=list[i]; if(t.id===task.id) continue;
+if(t.start<task.start||(t.start===task.start&&false)){ if(t.place) prev=t; }
+}
+if(prev) return {kind:'prev',task:prev,place:prev.place,label:'после «'+prev.title+'»'};
+if(S.settings.home) return {kind:'home',place:S.settings.home,label:'из дома'};
+return null;
+}
+function travelInfo(task,list,onReady){
+if(!task.place) return null;
+var o=originFor(task,list);
+if(!o) return {noOrigin:true};
+var mode=task.mode||S.settings.mode;
+var r;
+if(task.manual!=null) r={min:task.manual,approx:false,manual:true};
+else r=getRoute(o.place,task.place,mode,onReady);
+if(!r) return {loading:true,origin:o,mode:mode};
+var buf=S.settings.buffer||0;
+var leave=task.start-r.min-buf;
+var late=0, overlap=false;
+if(o.kind==='prev'){
+var free=task.start-(o.task.start+o.task.dur);
+if(free<0) overlap=true;
+else if(r.min>free) late=r.min-free;
+}
+return {origin:o,mode:mode,min:r.min,approx:r.approx,manual:r.manual,leave:leave,late:late,overlap:overlap};
+}
+/* ---------------- home render ---------------- */
+var app=document.getElementById('app');
+function weekStart(k){ var d=kdate(k); return addDays(d,-((d.getDay()+6)%7)); }
+function renderHome(){
+var sel=S.sel, ws=weekStart(sel), t=todayKey();
+var days='';
+for(var i=0;i<7;i++){
+var d=addDays(ws,i), k=dkey(d), cats={};
+S.tasks.forEach(function(x){ if(x.date===k) cats[x.cat]=1; });
+var dots=Object.keys(cats).slice(0,3).map(function(c){ return '<i style="background:var(--'+c+'-s)"></i>'; }).join('');
+days+='<button class="day'+(k===sel?' on':'')+(k===t?' today':'')+'" data-act="day" data-k="'+k+'" aria-label="'+esc(dayLong(k))+'" aria-pressed="'+(k===sel)+'">'+
+'<span class="wd">'+WDS[d.getDay()]+'</span><span class="num">'+d.getDate()+'</span><span class="dots">'+dots+'</span></button>';
+}
+var list=dayTasks(sel), body='';
+var rerender=function(){ if(!renderHome._q){ renderHome._q=1; requestAnimationFrame(function(){ renderHome._q=0; renderHome(); }); } };
+if(!list.length){
+body='<div class="empty">'+ic('clock',36)+'<h2>'+(sel===t?'На сегодня дел нет':'На этот день дел нет')+'</h2>'+
+'<p>Добавь пару, смену, встречу с друзьями или семейный ужин. Если укажешь место, я посчитаю дорогу и скажу, когда выходить.</p></div>';
+}else{
+var nm=nowMin();
+list.forEach(function(x){
+var tr=travelInfo(x,list,rerender);
+if(tr) body+=roadHTML(x,tr);
+else body+='<div class="gap"></div>';
+var past=(x.date<t)||(x.date===t&&x.start+x.dur<nm);
+body+='<div class="item'+(x.done?' done':'')+(past?' past':'')+'" style="'+catVars(x.cat)+'">'+
+'<div class="tcol"><b>'+fmt(x.start)+'</b><span>'+fmt(x.start+x.dur)+'</span></div>'+
+'<button class="card" data-act="edit" data-id="'+x.id+'">'+
+'<span class="plate">'+ic(x.cat,15)+catName(x.cat)+'</span>'+
+'<span class="ttl">'+esc(x.title)+'</span>'+
+(x.place?'<span class="meta">'+ic('pin',16)+'<span>'+esc(x.place.name)+'</span></span>':'')+
+'</button>'+
+'<button class="check" data-act="done" data-id="'+x.id+'" aria-label="'+(x.done?'Снять отметку':'Отметить выполненным')+'" aria-pressed="'+!!x.done+'"><i>'+ic('check',15)+'</i></button>'+
+'</div>';
+});
+}
+var needHome=!S.settings.home && list.some(function(x){ return x.place; });
+var mon=MN[ws.getMonth()]; var we=addDays(ws,6); if(we.getMonth()!==ws.getMonth()) mon=MN[ws.getMonth()].slice(0,3)+' – '+MN[we.getMonth()].slice(0,3);
+app.innerHTML=
+'<div class="top">'+brandHTML()+'<button class="iconbtn" data-act="settings" aria-label="Настройки">'+ic('gear',24)+'</button></div>'+
+'<div class="head"><h1 class="lt">'+dayTitle(sel)+'</h1>'+(sel!==t?'<button class="todaybtn" data-act="today">Сегодня</button>':'')+'</div>'+
+'<div class="sub">'+cap(dayLong(sel))+'</div>'+
+'<div class="week"><button class="arrow" data-act="week" data-d="-7" aria-label="Прошлая неделя">'+ic('left',20)+'</button><div class="days">'+days+'</div><button class="arrow" data-act="week" data-d="7" aria-label="Следующая неделя">'+ic('right',20)+'</button></div>'+
+(needHome?'<div class="banner">'+ic('home',22)+'<p>Укажи дом, и я посчитаю дорогу к первому делу дня</p><button class="b" data-act="sethome">Указать</button></div>':'')+
+'<div class="list">'+body+'</div>'+
+'<button class="fab" data-act="new">'+ic('plus',22)+'Новое дело</button>';
+}
+function roadHTML(x,tr){
+if(tr.noOrigin) return '<div class="road">'+ic('pin',20)+'<span class="txt">Откуда ехать?<small>Укажи дом, чтобы считать дорогу</small></span><button class="go" data-act="sethome">Дом</button></div>';
+if(tr.loading) return '<div class="road"><span class="spin"></span><span class="txt">Считаю дорогу '+esc(tr.origin.label)+'…</span></div>';
+var warn=tr.overlap||tr.late>0;
+var main, small;
+var how={car:'на машине',transit:'на транспорте',walk:'пешком'}[tr.mode];
+if(tr.overlap){ main='Накладка с «'+esc(tr.origin.task.title)+'»'; small='Дела идут одновременно'; }
+else if(tr.late>0){ main='Не успеваешь на '+durTxt(tr.late); small='Дорога '+(tr.approx?'≈ ':'')+durTxt(tr.min)+' '+esc(tr.origin.label); }
+else { main='Выйти в '+fmt(tr.leave); small=(tr.approx?'≈ ':'')+durTxt(tr.min)+' '+how+' '+esc(tr.origin.label); }
+return '<div class="road'+(warn?' warn':'')+'">'+ic(warn?'alert':tr.mode,20)+'<span class="txt"><b>'+main+'</b><small>'+small+'</small></span><button class="go" data-act="route" data-id="'+x.id+'" aria-label="Маршрут к «'+esc(x.title)+'»">'+ic('map',16)+'Путь</button></div>';
+}
+function brandHTML(){
+var spec=[['B'],['e'],[' ',1],['o'],['n'],[' ',1],['t'],['i',1,1],['m',1,1],['e',1,1]];
+return '<div class="brand" id="brand" aria-label="Beont">'+spec.map(function(s,i){
+if(!s[1]) return '<span>'+s[0]+'</span>';
+return '<span class="ch'+(s[2]?' mute':'')+'" data-w="'+({' ':.34,i:.38,m:1,e:.7}[s[0]])+'">'+s[0]+'</span>';
+}).join('')+'</div>';
+}
+function unfold(){
+var b=document.getElementById('brand'); if(!b) return;
+var ch=b.querySelectorAll('.ch'), n=ch.length;
+ch.forEach(function(el,i){ el.style.transitionDelay=(i*110)+'ms'; el.style.maxWidth=(+el.dataset.w+.08)+'em'; });
+b.classList.add('open');
+clearTimeout(unfold._t);
+unfold._t=setTimeout(function(){
+ch.forEach(function(el,i){ el.style.transitionDelay=((n-1-i)*50)+'ms'; el.style.maxWidth='0'; });
+b.classList.remove('open');
+},2800);
+}
+/* ---------------- sheets ---------------- */
+var layers=document.getElementById('layers');
+function openSheet(html,opts){
+opts=opts||{};
+var veil=document.createElement('div'); veil.className='veil';
+var sh=document.createElement('div'); sh.className='sheet'+(opts.small?' small':''); sh.setAttribute('role','dialog'); sh.setAttribute('aria-modal','true');
+sh.innerHTML='<div class="grab"></div>'+html;
+layers.appendChild(veil); layers.appendChild(sh);
+var entry={el:sh,veil:veil,onClose:opts.onClose};
+S.stack.push(entry);
+veil.addEventListener('click',function(){ closeSheet(); });
+requestAnimationFrame(function(){ requestAnimationFrame(function(){ veil.classList.add('in'); sh.classList.add('in'); }); });
+syncBack();
+return sh;
+}
+function closeSheet(){
+var e=S.stack.pop(); if(!e) return;
+e.el.classList.remove('in'); e.veil.classList.remove('in');
+setTimeout(function(){ e.el.remove(); e.veil.remove(); },360);
+if(e.onClose) e.onClose();
+syncBack();
+}
+function syncBack(){
+try{ if(!inTg||!tg.BackButton) return; if(S.stack.length) tg.BackButton.show(); else tg.BackButton.hide(); }catch(e){}
+}
+function topSheet(){ return S.stack.length?S.stack[S.stack.length-1].el:null; }
+/* ---------------- task editor ---------------- */
+var D=null; // draft
+function defaultStart(k){
+var list=dayTasks(k), t=todayKey();
+var base=600;
+if(k===t){ base=Math.ceil((nowMin()+30)/30)*30; }
+if(list.length){ var last=list[list.length-1]; base=Math.max(base,Math.ceil((last.start+last.dur+30)/15)*15); }
+return Math.min(base,23*60+30);
+}
+function openEditor(task){
+var isNew=!task;
+D=task?JSON.parse(JSON.stringify(task)):{id:uid(),title:'',cat:S.settings.lastCat||'study',date:S.sel,start:defaultStart(S.sel),dur:60,place:null,mode:S.settings.mode,manual:null,done:false,note:''};
+D._new=isNew;
+var html=
+'<div class="bar"><button class="l" data-act="close">Отмена</button><h3>'+(isNew?'Новое дело':'Дело')+'</h3><span></span></div>'+
+'<div class="scroll">'+
+'<label class="sr" for="f-title">Название</label>'+
+'<input id="f-title" class="titlein" placeholder="Что нужно сделать?" maxlength="200" autocomplete="off" enterkeyhint="done" value="'+esc(D.title)+'">'+
+'<div class="sec-h">Категория</div><div class="chips" id="f-cats"></div>'+
+'<div class="sec-h">Когда</div>'+
+'<div class="group">'+
+'<div class="sumrow"><b id="f-time"></b><span id="f-day"></span></div>'+
+'<div class="dstrip" id="f-days"></div>'+
+'<div class="wheelwrap"><div class="band"></div>'+wheelCol('wh','Часы',24,1)+'<span class="colon">:</span>'+wheelCol('wm','Минуты',12,5)+'</div>'+
+'<div class="quick" id="f-quick"></div>'+
+'</div>'+
+'<div class="sec-h">Сколько займёт</div><div class="chips" id="f-durs"></div>'+
+'<div class="sec-h">Где</div><div class="group" id="f-place"></div>'+
+'<div id="f-road"></div>'+
+'<div class="sec-h">Заметка</div><label class="sr" for="f-note">Заметка</label><textarea id="f-note" class="note" placeholder="Аудитория, что взять с собой, кому позвонить…" maxlength="1500">'+esc(D.note||'')+'</textarea>'+
+(isNew?'':'<button class="danger" data-act="delete">Удалить дело</button>')+
+'</div>'+
+'<div class="foot"><button class="primary" id="f-save" data-act="save">'+(isNew?'Добавить':'Сохранить')+'</button></div>';
+var sh=openSheet(html,{onClose:function(){ D=null; }});
+sh.id='editor';
+var ti=sh.querySelector('#f-title');
+ti.addEventListener('input',function(){ D.title=ti.value; updSave(); });
+ti.addEventListener('keydown',function(e){ if(e.key==='Enter'){ ti.blur(); } });
+sh.querySelector('#f-note').addEventListener('input',function(e){ D.note=e.target.value; });
+updCats(); updDays(); updTime(); updDurs(); updQuick(); updPlace(); updSave();
+initWheel(sh.querySelector('#wh'),Math.floor(D.start/60),function(i){ D.start=i*60+D.start%60; D.manual=D.manual; updTime(); updDays(false); updQuick(); updRoad(); });
+initWheel(sh.querySelector('#wm'),Math.floor((D.start%60)/5),function(i){ D.start=Math.floor(D.start/60)*60+i*5; updTime(); updQuick(); updRoad(); });
+if(isNew) setTimeout(function(){ try{ ti.focus({preventScroll:true}); }catch(e){} },420);
+}
+function wheelCol(id,label,n,step){
+var h='<div class="wcol" id="'+id+'" role="listbox" aria-label="'+label+'" tabindex="0"><div class="pad"></div>';
+for(var i=0;i<n;i++) h+='<button tabindex="-1" role="option" data-i="'+i+'">'+pad(i*step)+'</button>';
+return h+'<div class="pad"></div></div>';
+}
+function initWheel(col,idx,onChange){
+var H=40, cur=idx, timer=null, lock=false;
+var mark=function(i){ col.querySelectorAll('button').forEach(function(b,j){ var a=(j===i); b.classList.toggle('act',a); b.setAttribute('aria-selected',a); }); };
+var setIdx=function(i,smooth){ lock=true; col.scrollTo({top:i*H,behavior:smooth?'smooth':'auto'}); mark(i); setTimeout(function(){ lock=false; },smooth?400:60); };
+col._set=function(i){ cur=i; setIdx(i,true); };
+requestAnimationFrame(function(){ setIdx(idx,false); });
+setTimeout(function(){ setIdx(cur,false); },60);
+col.addEventListener('scroll',function(){
+var live=Math.round(col.scrollTop/H); mark(live);
+clearTimeout(timer);
+timer=setTimeout(function(){
+var i=Math.max(0,Math.min(col.querySelectorAll('button').length-1,Math.round(col.scrollTop/H)));
+if(i!==cur){ cur=i; hap('sel'); onChange(i); }
+},90);
+},{passive:true});
+col.addEventListener('click',function(e){
+var b=e.target.closest('button'); if(!b) return;
+var i=+b.dataset.i; if(i!==cur){ cur=i; hap('sel'); onChange(i); } setIdx(i,true);
+});
+col.addEventListener('keydown',function(e){
+var n=col.querySelectorAll('button').length;
+if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+e.preventDefault(); var i=Math.max(0,Math.min(n-1,cur+(e.key==='ArrowDown'?1:-1)));
+if(i!==cur){ cur=i; onChange(i); } setIdx(i,true);
+}
+});
+}
+function $e(id){ var s=topSheet(); var ed=document.getElementById('editor'); return ed?ed.querySelector('#'+id):null; }
+function updSave(){ var b=$e('f-save'); if(b) b.disabled=!D.title.trim(); }
+function updCats(){
+var el=$e('f-cats'); if(!el) return;
+el.innerHTML=CATS.map(function(c){
+return '<button class="cat'+(D.cat===c.id?' on':'')+'" style="'+catVars(c.id)+'" data-act="cat" data-v="'+c.id+'" aria-pressed="'+(D.cat===c.id)+'">'+ic(c.id,18)+c.name+'</button>';
+}).join('');
+}
+function updDays(scroll){
+var el=$e('f-days'); if(!el) return;
+var t=new Date(), h='', base=addDays(t,-1);
+var selD=kdate(D.date); if(selD<base) base=selD;
+for(var i=0;i<45;i++){
+var d=addDays(base,i), k=dkey(d), lab=(k===todayKey())?'Сег':WDS[d.getDay()];
+h+='<button class="dpill'+(k===D.date?' on':'')+'" data-act="dday" data-k="'+k+'" aria-label="'+esc(dayLong(k))+'" aria-pressed="'+(k===D.date)+'"><small>'+lab+'</small><b>'+d.getDate()+'</b></button>';
+}
+el.innerHTML=h;
+if(scroll!==false){ var on=el.querySelector('.on'); if(on) requestAnimationFrame(function(){ el.scrollLeft=Math.max(0,on.offsetLeft-el.clientWidth/2+25); }); }
+}
+function updTime(){
+var a=$e('f-time'), b=$e('f-day'); if(!a) return;
+a.textContent=fmt(D.start)+' – '+fmt(D.start+D.dur);
+var dd=kdate(D.date);
+b.textContent=dayShort(D.date)+(D.start+D.dur>=1440?' · до утра':'')+(dd.getMonth()!==new Date().getMonth()&&D.date!==todayKey()?'':'');
+}
+function updDurs(){
+var el=$e('f-durs'); if(!el) return;
+var opts=[15,30,45,60,90,120,180,240];
+if(opts.indexOf(D.dur)<0){ opts.push(D.dur); opts.sort(function(a,b){return a-b;}); }
+el.innerHTML=opts.map(function(m){ return '<button class="chip'+(D.dur===m?' on':'')+'" data-act="dur" data-v="'+m+'" aria-pressed="'+(D.dur===m)+'">'+durTxt(m)+'</button>'; }).join('');
+}
+function quickOpts(){
+var t=todayKey(), tm=dkey(addDays(new Date(),1)), n=Math.ceil((nowMin()+60)/5)*5;
+var o=[];
+if(n<1440) o.push({l:'Через час',k:t,s:n});
+o.push({l:'Вечером, 19:00',k:D.date,s:1140});
+o.push({l:'Завтра, 9:00',k:tm,s:540});
+o.push({l:'Завтра, 14:00',k:tm,s:840});
+return o;
+}
+function updQuick(){
+var el=$e('f-quick'); if(!el) return;
+el.innerHTML=quickOpts().map(function(q,i){ var on=(q.k===D.date&&q.s===D.start); return '<button class="chip'+(on?' on':'')+'" data-act="quick" data-i="'+i+'">'+q.l+'</button>'; }).join('');
+}
+function setWheels(){
+var ed=document.getElementById('editor'); if(!ed) return;
+var wh=ed.querySelector('#wh'), wm=ed.querySelector('#wm');
+if(wh&&wh._set) wh._set(Math.floor(D.start/60));
+if(wm&&wm._set) wm._set(Math.floor((D.start%60)/5));
+}
+function updPlace(){
+var el=$e('f-place'); if(!el) return;
+if(!D.place){
+el.innerHTML='<button class="row" data-act="pickplace"><span class="ic">'+ic('pin',18)+'</span><span class="tx"><b>Добавить место</b><small>Адрес, кафе, корпус, станция</small></span><span class="chev">'+ic('right',18)+'</span></button>';
+}else{
+el.innerHTML='<div class="row"><span class="ic">'+ic('pin',18)+'</span><button class="tx" data-act="pickplace" style="text-align:left"><b>'+esc(D.place.name)+'</b><small>'+esc(D.place.addr||'Изменить место')+'</small></button><button class="x" data-act="noplace" aria-label="Убрать место">'+ic('x',18)+'</button></div>';
+}
+updRoad();
+}
+function updRoad(){
+var el=$e('f-road'); if(!el) return;
+if(!D.place){ el.innerHTML=''; return; }
+var list=dayTasks(D.date).filter(function(x){ return x.id!==D.id; }).concat([D]).sort(function(a,b){return a.start-b.start;});
+var tr=travelInfo(D,list,function(){ if(D) updRoad(); });
+var seg='<div class="seg" role="group" aria-label="Как добираться">'+MODES.map(function(m){ var on=(D.mode||S.settings.mode)===m.id; return '<button class="'+(on?'on':'')+'" data-act="mode" data-v="'+m.id+'" aria-pressed="'+on+'">'+ic(m.id,17)+m.name+'</button>'; }).join('')+'</div>';
+var inner;
+if(tr.noOrigin){
+inner='<div class="roadbig">'+ic('home',24)+'<div class="d">Откуда ехать? Укажи дом, и я посчитаю дорогу</div></div><button class="chip" data-act="sethome" style="align-self:flex-start">Указать дом</button>';
+}else if(tr.loading){
+inner='<div class="roadbig"><span class="spin"></span><div class="d">Считаю дорогу '+esc(tr.origin.label)+'…</div></div>';
+}else{
+var warn='';
+if(tr.overlap) warn='<div class="road warn" style="margin:0">'+ic('alert',20)+'<span class="txt">Пересекается с «'+esc(tr.origin.task.title)+'»</span></div>';
+else if(tr.late>0) warn='<div class="road warn" style="margin:0">'+ic('alert',20)+'<span class="txt">Не успеваешь на '+durTxt(tr.late)+'<small>После «'+esc(tr.origin.task.title)+'» остаётся меньше времени, чем нужно на дорогу</small></span></div>';
+inner='<div class="roadbig">'+ic(tr.mode,24)+'<div><div class="n">'+(tr.approx?'≈ ':'')+durTxt(tr.min)+'</div><div class="d">Выйти в '+fmt(tr.leave)+' · '+esc(tr.origin.label)+(S.settings.buffer?' · запас '+S.settings.buffer+' мин':'')+'</div></div></div>'+
+warn+
+'<div class="stepper"><button data-act="tr" data-v="-5" aria-label="Дорога на 5 минут меньше">−5</button><button data-act="tr" data-v="5" aria-label="Дорога на 5 минут больше">+5</button>'+
+'<span>'+(tr.manual?'Указано вручную':(tr.approx?'Примерно, по расстоянию':'По картам, с запасом на светофоры'))+'</span>'+
+(tr.manual?'<button class="reset" data-act="trreset">Сбросить</button>':'')+'</div>';
+}
+el.innerHTML='<div class="sec-h">Дорога</div><div class="group">'+seg+'<div class="roadbox">'+inner+'</div></div>';
+}
+function saveDraft(){
+if(!D||!D.title.trim()) return;
+var t=JSON.parse(JSON.stringify(D)); var isNew=t._new; delete t._new; t.title=t.title.trim();
+var i=S.tasks.findIndex(function(x){ return x.id===t.id; });
+if(i>=0) S.tasks[i]=t; else S.tasks.push(t);
+S.settings.lastCat=t.cat;
+saveTask(t); saveSettings();
+S.sel=t.date;
+closeSheet(); renderHome(); hap('ok');
+if(isNew){ unfold(); toast('Добавлено: '+dayShort(t.date)+', '+fmt(t.start)); }
+else toast('Сохранено');
+}
+/* ---------------- place picker ---------------- */
+function openPlacePicker(target){
+// target: 'task' | 'home'
+var recent=[], seen={};
+S.tasks.slice().reverse().forEach(function(t){ if(t.place){ var k=t.place.name+'|'+t.place.addr; if(!seen[k]&&recent.length<6){ seen[k]=1; recent.push(t.place); } } });
+var html='<div class="bar"><button class="l" data-act="close">'+(target==='home'?'Отмена':'Назад')+'</button><h3>'+(target==='home'?'Где ты живёшь':'Место')+'</h3><span></span></div>'+
+'<div class="scroll">'+
+'<label class="search">'+ic('search',18)+'<span class="sr">Поиск адреса</span><input id="p-q" type="search" placeholder="Адрес или название места" autocomplete="off" enterkeyhint="search"></label>'+
+'<div id="p-res"></div>'+
+'<div class="group" style="margin-top:12px"><button class="row" data-act="myloc"><span class="ic">'+ic('locate',18)+'</span><span class="tx"><b>Моё местоположение</b><small>Возьму геопозицию из Телеграма</small></span></button>'+
+(target!=='home'&&S.settings.home?'<button class="row" data-act="usehome"><span class="ic">'+ic('home',18)+'</span><span class="tx"><b>Дом</b><small>'+esc(S.settings.home.name)+'</small></span></button>':'')+
+'</div>'+
+(recent.length&&target!=='home'?'<div class="sec-h">Недавние</div><div class="group">'+recent.map(function(p,i){ return '<button class="row" data-act="recent" data-i="'+i+'"><span class="ic">'+ic('pin',18)+'</span><span class="tx"><b>'+esc(p.name)+'</b><small>'+esc(p.addr||'')+'</small></span></button>'; }).join('')+'</div>':'')+
+'<p class="foot-note">Поиск адресов и маршруты: данные © участники OpenStreetMap</p>'+
+'</div>';
+var sh=openSheet(html);
+sh._target=target; sh._recent=recent; sh._res=[];
+var q=sh.querySelector('#p-q'), res=sh.querySelector('#p-res'), tmr=null;
+var bias=S.settings.home||(recent[0])||null;
+q.addEventListener('input',function(){
+clearTimeout(tmr);
+var v=q.value.trim();
+if(v.length<3){ res.innerHTML=v.length?'<p class="hint">Продолжай вводить…</p>':''; return; }
+res.innerHTML='<p class="hint" style="display:flex;gap:8px;align-items:center"><span class="spin"></span>Ищу…</p>';
+tmr=setTimeout(function(){
+geoSearch(v,bias,function(list,err){
+sh._res=list;
+if(err){ res.innerHTML='<p class="hint">Не получилось найти: нет связи с поиском адресов. Попробуй ещё раз или выбери «Моё местоположение».</p>'; return; }
+if(!list.length){ res.innerHTML='<p class="hint">Ничего не нашлось. Добавь город или номер дома, например «Баумана 12 Казань».</p>'; return; }
+res.innerHTML='<div class="group">'+list.map(function(p,i){ return '<button class="row" data-act="res" data-i="'+i+'"><span class="ic">'+ic('pin',18)+'</span><span class="tx"><b>'+esc(p.name)+'</b><small>'+esc(p.addr||'')+'</small></span></button>'; }).join('')+'</div>';
+});
+},380);
+});
+setTimeout(function(){ try{ q.focus({preventScroll:true}); }catch(e){} },420);
+}
+function placeChosen(p){
+var sh=topSheet(); var target=sh&&sh._target;
+closeSheet();
+if(target==='home'){
+S.settings.home=p; saveSettings(); hap('ok'); toast('Дом сохранён');
+renderHome(); if(D) updRoad(); refreshSettings();
+}else if(D){
+D.place=p; D.manual=null; hap('sel'); updPlace();
+}
+}
+/* ---------------- settings ---------------- */
+function openSettings(){
+var sh=openSheet('<div class="bar"><span></span><h3>Настройки</h3><button class="r" data-act="close">Готово</button></div><div class="scroll" id="set-body"></div>');
+sh.id='settings';
+refreshSettings();
+}
+function refreshSettings(){
+var el=document.querySelector('#settings #set-body'); if(!el) return;
+var s=S.settings;
+var maps=MAPS.filter(function(m){ return !m.ios||isIOS; });
+el.innerHTML=
+'<div class="sec-h">Дом</div><div class="group">'+
+(s.home?'<div class="row"><span class="ic">'+ic('home',18)+'</span><button class="tx" data-act="sethome" style="text-align:left"><b>'+esc(s.home.name)+'</b><small>'+esc(s.home.addr||'Изменить')+'</small></button><button class="x" data-act="nohome" aria-label="Убрать дом">'+ic('x',18)+'</button></div>'
+:'<button class="row" data-act="sethome"><span class="ic">'+ic('home',18)+'</span><span class="tx"><b>Указать дом</b><small>Чтобы считать дорогу к первому делу</small></span><span class="chev">'+ic('right',18)+'</span></button>')+
+'</div>'+
+'<div class="sec-h">Открывать маршрут в</div><div class="group">'+maps.map(function(m){ var on=s.maps===m.id; return '<button class="row" data-act="maps" data-v="'+m.id+'" aria-pressed="'+on+'"><span class="mono">'+m.mono+'</span><span class="tx"><b>'+m.name+'</b></span><span class="radio'+(on?' on':'')+'"></span></button>'; }).join('')+'</div>'+
+'<div class="sec-h">Как обычно добираешься</div><div class="group" style="padding-bottom:12px"><div class="seg">'+MODES.map(function(m){ var on=s.mode===m.id; return '<button class="'+(on?'on':'')+'" data-act="defmode" data-v="'+m.id+'" aria-pressed="'+on+'">'+ic(m.id,17)+m.name+'</button>'; }).join('')+'</div></div>'+
+'<div class="sec-h">Запас времени на выход <span>сверху к дороге</span></div><div class="chips">'+[0,5,10,15].map(function(m){ var on=s.buffer===m; return '<button class="chip'+(on?' on':'')+'" data-act="buffer" data-v="'+m+'" aria-pressed="'+on+'">'+(m?m+' мин':'Без запаса')+'</button>'; }).join('')+'</div>'+
+'<p class="foot-note">'+(cloud?'Дела хранятся в облаке Телеграма и видны на всех твоих устройствах.':'Дела хранятся на этом устройстве. Открой Beont в Телеграме, чтобы они были на всех устройствах.')+'<br>Время в пути примерное и без пробок. Маршрут с пробками покажут карты.<br>Адреса и маршруты: © участники OpenStreetMap</p>';
+}
+function openMapPicker(task){
+var maps=MAPS.filter(function(m){ return m.id!=='ask'&&(!m.ios||isIOS); });
+var sh=openSheet('<div class="bar"><span></span><h3>Открыть маршрут</h3><button class="r" data-act="close">Отмена</button></div><div class="scroll"><div class="group">'+
+maps.map(function(m){ return '<button class="row" data-act="openmap" data-v="'+m.id+'"><span class="mono">'+m.mono+'</span><span class="tx"><b>'+m.name+'</b></span><span class="chev">'+ic('right',18)+'</span></button>'; }).join('')+
+'</div><p class="hint">Карты построят путь от того места, где ты сейчас.</p></div>',{small:true});
+sh._task=task;
+}
+/* ---------------- events ---------------- */
+document.addEventListener('click',function(e){
+var b=e.target.closest('[data-act]'); if(!b) return;
+var a=b.dataset.act, sh=topSheet();
+switch(a){
+case 'day': S.sel=b.dataset.k; hap('sel'); renderHome(); break;
+case 'week': S.sel=dkey(addDays(kdate(S.sel),+b.dataset.d)); hap('sel'); renderHome(); break;
+case 'today': S.sel=todayKey(); hap('sel'); renderHome(); break;
+case 'new': hap('light'); openEditor(null); break;
+case 'edit': hap('light'); openEditor(S.tasks.find(function(x){ return x.id===b.dataset.id; })); break;
+case 'done': {
+var t=S.tasks.find(function(x){ return x.id===b.dataset.id; }); if(!t) break;
+t.done=!t.done; saveTask(t); hap(t.done?'ok':'sel'); renderHome(); break;
+}
+case 'route': { var t2=S.tasks.find(function(x){ return x.id===b.dataset.id; }); if(t2) openRoute(t2); break; }
+case 'settings': hap('light'); openSettings(); break;
+case 'sethome': hap('light'); openPlacePicker('home'); break;
+case 'nohome': S.settings.home=null; saveSettings(); refreshSettings(); renderHome(); break;
+case 'close': closeSheet(); break;
+case 'cat': D.cat=b.dataset.v; hap('sel'); updCats(); break;
+case 'dday': D.date=b.dataset.k; hap('sel'); updDays(false); updTime(); updQuick(); updRoad(); break;
+case 'dur': D.dur=+b.dataset.v; hap('sel'); updDurs(); updTime(); break;
+case 'quick': { var q=quickOpts()[+b.dataset.i]; if(!q) break; D.date=q.k; D.start=q.s; hap('sel'); updDays(); updTime(); updQuick(); setWheels(); updRoad(); break; }
+case 'pickplace': hap('light'); openPlacePicker('task'); break;
+case 'noplace': D.place=null; D.manual=null; hap('sel'); updPlace(); break;
+case 'mode': D.mode=b.dataset.v; D.manual=null; hap('sel'); updRoad(); break;
+case 'tr': {
+var list=dayTasks(D.date).filter(function(x){ return x.id!==D.id; }).concat([D]);
+var cur=D.manual; if(cur==null){ var ti=travelInfo(D,list); cur=(ti&&ti.min)||15; }
+D.manual=Math.max(0,Math.min(300,cur+(+b.dataset.v))); hap('sel'); updRoad(); break;
+}
+case 'trreset': D.manual=null; hap('sel'); updRoad(); break;
+case 'save': saveDraft(); break;
+case 'delete': {
+var id=D.id;
+confirmBox('Удалить это дело?',function(ok){
+if(!ok) return;
+S.tasks=S.tasks.filter(function(x){ return x.id!==id; }); delTask(id);
+closeSheet(); renderHome(); hap('warn'); toast('Удалено');
+});
+break;
+}
+case 'res': placeChosen(sh._res[+b.dataset.i]); break;
+case 'recent': placeChosen(sh._recent[+b.dataset.i]); break;
+case 'usehome': placeChosen(S.settings.home); break;
+case 'myloc': {
+var row=b; row.querySelector('small').textContent='Определяю…';
+myLocation(function(pos,err){
+if(!pos){ row.querySelector('small').textContent=err||'Не получилось'; hap('warn'); return; }
+reverse(pos.lat,pos.lon,function(p){ placeChosen(p); });
+});
+break;
+}
+case 'maps': S.settings.maps=b.dataset.v; saveSettings(); hap('sel'); refreshSettings(); break;
+case 'defmode': S.settings.mode=b.dataset.v; saveSettings(); hap('sel'); refreshSettings(); renderHome(); break;
+case 'buffer': S.settings.buffer=+b.dataset.v; saveSettings(); hap('sel'); refreshSettings(); renderHome(); break;
+case 'openmap': { var tk=sh._task; closeSheet(); openUrl(routeUrl(b.dataset.v,tk.place,tk.mode||S.settings.mode)); break; }
+}
+});
+/* ---------------- theme & init ---------------- */
+function applyTheme(){
+var dark = tg && tg.colorScheme ? tg.colorScheme==='dark' : (window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+if(/[?&]theme=dark/.test(location.search)) dark=true;
+if(/[?&]theme=light/.test(location.search)) dark=false;
+document.documentElement.classList.toggle('dark',!!dark);
+var c=dark?'#000000':'#F2F2F7';
+try{
+if(inTg){
+if(tg.setHeaderColor) tg.setHeaderColor(c);
+if(tg.setBackgroundColor) tg.setBackgroundColor(c);
+if(tg.setBottomBarColor && tg.isVersionAtLeast('7.10')) tg.setBottomBarColor(c);
+}
+}catch(e){}
+}
+function init(){
+applyTheme();
+loadLocal();
+renderHome();
+if(tg){
+try{ tg.ready(); }catch(e){}
+if(inTg){
+try{ tg.expand(); }catch(e){}
+try{ if(tg.isVersionAtLeast('7.7')) tg.disableVerticalSwipes(); }catch(e){}
+try{ tg.onEvent('themeChanged',function(){ applyTheme(); }); }catch(e){}
+try{ tg.BackButton.onClick(function(){ closeSheet(); }); }catch(e){}
+}
+}
+loadCloud(function(){ renderHome(); });
+// refresh "past" state and today rollover each minute
+setInterval(function(){ if(!S.stack.length) renderHome(); },60000);
+}
+window.__beont={S:S,render:renderHome,routeCache:routeCache};
+init();
+})();
+</script>
+</body>
+</html>
