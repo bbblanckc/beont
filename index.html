@@ -128,16 +128,26 @@ svg{flex:none}
 .sebtn b{font-size:28px;line-height:32px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .sebtn.on{background:var(--card);box-shadow:inset 0 0 0 2px var(--tint)}
 .wtip{text-align:center;font-size:13px;color:var(--sec);margin:6px 0 2px}
-.dpick{position:relative;overflow:hidden}
-.dpick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
-.dstrip{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 12px;scrollbar-width:none}
-.dstrip::-webkit-scrollbar{display:none}
-.dpill{width:50px;height:60px;flex:none;border-radius:14px;background:var(--field);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
-.dpill small{font-size:12px;font-weight:600;color:var(--sec)}
-.dpill b{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
-.dpill.on{background:var(--tint);color:var(--onTint)}
-.dpill.on small{color:var(--onTint);opacity:.8}
-.wheelwrap{position:relative;height:200px;margin:0 14px;display:flex;justify-content:center;gap:4px}
+.cal{padding:4px 8px 6px}
+.calhead{display:flex;align-items:center;gap:6px;padding:8px 6px 6px}
+.calhead b{flex:1;font-size:17px;font-weight:600}
+.calhead .nav{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--label)}
+.calhead .nav:active{background:var(--fill)}
+.calhead .tb{height:30px;padding:0 12px;border-radius:15px;background:var(--fill);font-size:14px;font-weight:600}
+.calgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));row-gap:2px}
+.calwd{font-size:12px;font-weight:600;color:var(--sec);text-align:center;padding:2px 0 4px;text-transform:uppercase}
+.cday{height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.cday .n{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;font-variant-numeric:tabular-nums}
+.cday.out .n{color:var(--sec);opacity:.5}
+.cday.past .n{color:var(--sec)}
+.cday.today .n{color:var(--tint);font-weight:700;box-shadow:inset 0 0 0 1.5px var(--tint)}
+.cday.on .n{background:var(--tint);color:var(--onTint);font-weight:700;box-shadow:none;opacity:1}
+.cday .dots{display:flex;gap:2px;height:4px}
+.cday .dots i{width:4px;height:4px;border-radius:2px;display:block}
+.homecal{margin:12px 16px 4px;background:var(--card);border-radius:16px;box-shadow:var(--shadow)}
+.headbtns{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.iconbtn.on{background:var(--fill);color:var(--label)}
+.wheelwrap{position:relative;height:200px;margin:0 14px 14px;display:flex;justify-content:center;gap:4px}
 .wheelwrap .band{position:absolute;left:0;right:0;top:80px;height:40px;border-radius:10px;background:var(--field);pointer-events:none}
 .wheelwrap .colon{position:relative;align-self:center;font-size:24px;font-weight:600;width:14px;text-align:center}
 .wcol{position:relative;width:84px;height:200px;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(to bottom,transparent,#000 30%,#000 70%,transparent);outline:none}
@@ -579,9 +589,9 @@ var needHome=!S.settings.home && list.some(function(x){ return x.place; });
 var mon=MN[ws.getMonth()]; var we=addDays(ws,6); if(we.getMonth()!==ws.getMonth()) mon=MN[ws.getMonth()].slice(0,3)+' – '+MN[we.getMonth()].slice(0,3);
 app.innerHTML=
 '<div class="top">'+brandHTML()+'<button class="iconbtn" data-act="settings" aria-label="Настройки">'+ic('gear',24)+'</button></div>'+
-'<div class="head"><h1 class="lt">'+dayTitle(sel)+'</h1>'+(sel!==t?'<button class="todaybtn" data-act="today">Сегодня</button>':'')+'</div>'+
+'<div class="head"><h1 class="lt">'+dayTitle(sel)+'</h1><div class="headbtns">'+(sel!==t?'<button class="todaybtn" data-act="today">Сегодня</button>':'')+'<button class="iconbtn'+(S.monthView?' on':'')+'" data-act="monthview" aria-label="'+(S.monthView?'Показать неделю':'Показать месяц')+'" aria-pressed="'+!!S.monthView+'">'+ic('cal',22)+'</button></div></div>'+
 '<div class="sub">'+cap(dayLong(sel))+'</div>'+
-'<div class="week"><button class="arrow" data-act="week" data-d="-7" aria-label="Прошлая неделя">'+ic('left',20)+'</button><div class="days">'+days+'</div><button class="arrow" data-act="week" data-d="7" aria-label="Следующая неделя">'+ic('right',20)+'</button></div>'+
+(S.monthView?'<div class="homecal cal">'+calHTML(S.cm||monthOf(sel),sel,'h')+'</div>':'<div class="week"><button class="arrow" data-act="week" data-d="-7" aria-label="Прошлая неделя">'+ic('left',20)+'</button><div class="days">'+days+'</div><button class="arrow" data-act="week" data-d="7" aria-label="Следующая неделя">'+ic('right',20)+'</button></div>')+
 (needHome?'<div class="banner">'+ic('home',22)+'<p>Укажи дом, и я посчитаю дорогу к первому делу дня</p><button class="b" data-act="sethome">Указать</button></div>':'')+
 '<div class="list">'+body+'</div>'+
 '<button class="fab" data-act="new">'+ic('plus',22)+'Новое дело</button>';
@@ -666,12 +676,10 @@ var html=
 '<div class="sec-h">Категория</div><div class="chips" id="f-cats"></div>'+
 '<div class="sec-h">Когда</div>'+
 '<div class="group">'+
-'<div class="se" id="f-se"></div>'+
-'<div class="dstrip" id="f-days"></div><div class="wtip" id="f-wtip"></div>'+
+'<div class="cal" id="f-days"></div>'+
+'<div class="se" id="f-se"></div><div class="wtip" id="f-wtip"></div>'+
 '<div class="wheelwrap"><div class="band"></div>'+wheelCol('wh','Часы',24,1)+'<span class="colon">:</span>'+wheelCol('wm','Минуты',12,5)+'</div>'+
-'<div class="quick" id="f-quick"></div>'+
 '</div>'+
-'<div class="sec-h">Сколько займёт</div><div class="chips" id="f-durs"></div>'+
 '<div class="sec-h">Где</div><div class="group" id="f-place"></div>'+
 '<div id="f-road"></div>'+
 '<div class="sec-h">Заметка</div><label class="sr" for="f-note">Заметка</label><textarea id="f-note" class="note" placeholder="Аудитория, что взять с собой, кому позвонить…" maxlength="1500">'+esc(D.note||'')+'</textarea>'+
@@ -685,9 +693,6 @@ ti.addEventListener('input',function(){ D.title=ti.value; updSave(); });
 ti.addEventListener('keydown',function(e){ if(e.key==='Enter'){ ti.blur(); } });
 sh.querySelector('#f-note').addEventListener('input',function(e){ D.note=e.target.value; });
 updCats(); updDays(); updTime(); updDurs(); updQuick(); updPlace(); updSave();
-var ds=sh.querySelector('#f-days');
-ds.addEventListener('wheel',function(e){ if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){ ds.scrollLeft+=e.deltaY; e.preventDefault(); } },{passive:false});
-ds.addEventListener('change',function(e){ if(e.target&&e.target.type==='date'&&e.target.value){ D.date=e.target.value; hap('sel'); updDays(); updTime(); updQuick(); updRoad(); } });
 initWheel(sh.querySelector('#wh'),Math.floor(D.start/60),function(i){
 if(WM==='start') D.start=i*60+D.start%60; else setEnd(i*60+endMin()%60);
 afterTime();
@@ -738,17 +743,32 @@ el.innerHTML=CATS.map(function(c){
 return '<button class="cat'+(D.cat===c.id?' on':'')+'" style="'+catVars(c.id)+'" data-act="cat" data-v="'+c.id+'" aria-pressed="'+(D.cat===c.id)+'">'+ic(c.id,18)+c.name+'</button>';
 }).join('');
 }
-function updDays(scroll){
-var el=$e('f-days'); if(!el) return;
-var t=new Date(), h='', base=addDays(t,-1);
-var selD=kdate(D.date); if(selD<base) base=selD;
-for(var i=0;i<45;i++){
-var d=addDays(base,i), k=dkey(d), lab=(k===todayKey())?'Сег':WDS[d.getDay()];
-h+='<button class="dpill'+(k===D.date?' on':'')+'" data-act="dday" data-k="'+k+'" aria-label="'+esc(dayLong(k))+'" aria-pressed="'+(k===D.date)+'"><small>'+lab+'</small><b>'+d.getDate()+'</b></button>';
+var CM=null; // month shown in editor calendar
+function monthOf(k){ var d=kdate(k); return new Date(d.getFullYear(),d.getMonth(),1); }
+function addMonths(m,n){ return new Date(m.getFullYear(),m.getMonth()+n,1); }
+function calHTML(month,selK,pre,skipId){
+var t=todayKey(), first=month, off=(first.getDay()+6)%7;
+var dim=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();
+var weeks=Math.ceil((off+dim)/7), start=addDays(first,-off);
+var showToday=selK!==t||month.getMonth()!==new Date().getMonth()||month.getFullYear()!==new Date().getFullYear();
+var h='<div class="calhead"><b>'+MN[month.getMonth()]+' '+month.getFullYear()+'</b>'+
+(showToday?'<button class="tb" data-act="'+pre+'today">Сегодня</button>':'')+
+'<button class="nav" data-act="'+pre+'mon" data-d="-1" aria-label="Прошлый месяц">'+ic('left',20)+'</button>'+
+'<button class="nav" data-act="'+pre+'mon" data-d="1" aria-label="Следующий месяц">'+ic('right',20)+'</button></div><div class="calgrid">';
+['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(function(w){ h+='<span class="calwd">'+w+'</span>'; });
+for(var i=0;i<weeks*7;i++){
+var d=addDays(start,i), k=dkey(d), cats={};
+S.tasks.forEach(function(x){ if(x.date===k&&x.id!==skipId) cats[x.cat]=1; });
+var dots=Object.keys(cats).slice(0,3).map(function(c){ return '<i style="background:var(--'+c+'-s)"></i>'; }).join('');
+var cls='cday'+(d.getMonth()!==month.getMonth()?' out':'')+(k<t?' past':'')+(k===t?' today':'')+(k===selK?' on':'');
+h+='<button class="'+cls+'" data-act="'+pre+'day" data-k="'+k+'" aria-label="'+esc(dayLong(k))+'" aria-pressed="'+(k===selK)+'"><span class="n">'+d.getDate()+'</span><span class="dots">'+dots+'</span></button>';
 }
-h+='<label class="dpill dpick" aria-label="Выбрать дату в календаре"><small>Дата</small>'+ic('cal',18)+'<input type="date" value="'+D.date+'"></label>';
-el.innerHTML=h;
-if(scroll!==false){ var on=el.querySelector('.on'); if(on) requestAnimationFrame(function(){ el.scrollLeft=Math.max(0,on.offsetLeft-el.clientWidth/2+25); }); }
+return h+'</div>';
+}
+function updDays(keep){
+var el=$e('f-days'); if(!el) return;
+if(keep!==false||!CM) CM=monthOf(D.date);
+el.innerHTML=calHTML(CM,D.date,'e',D.id);
 }
 function updTime(){
 var el=$e('f-se'); if(!el) return;
@@ -756,7 +776,7 @@ var next=D.start+D.dur>=1440;
 el.innerHTML=
 '<button class="sebtn'+(WM==='start'?' on':'')+'" data-act="wm" data-v="start" aria-pressed="'+(WM==='start')+'"><small>Начало · '+esc(dayShort(D.date))+'</small><b>'+fmt(D.start)+'</b></button>'+
 '<button class="sebtn'+(WM==='end'?' on':'')+'" data-act="wm" data-v="end" aria-pressed="'+(WM==='end')+'"><small>Конец · '+durTxt(D.dur)+(next?', ночью':'')+'</small><b>'+fmt(D.start+D.dur)+'</b></button>';
-var tip=$e('f-wtip'); if(tip) tip.textContent=WM==='start'?'Крути колесо, чтобы выбрать начало':'Крути колесо, чтобы выбрать конец';
+var tip=$e('f-wtip'); if(tip) tip.textContent=WM==='start'?'Колесо меняет начало. Нажми «Конец», чтобы выбрать окончание':'Колесо меняет конец. Нажми «Начало», чтобы вернуться';
 }
 function updDurs(){
 var el=$e('f-durs'); if(!el) return;
@@ -907,7 +927,7 @@ var a=b.dataset.act, sh=topSheet();
 switch(a){
 case 'day': S.sel=b.dataset.k; hap('sel'); renderHome(); break;
 case 'week': S.sel=dkey(addDays(kdate(S.sel),+b.dataset.d)); hap('sel'); renderHome(); break;
-case 'today': S.sel=todayKey(); hap('sel'); renderHome(); break;
+case 'today': S.sel=todayKey(); S.cm=null; hap('sel'); renderHome(); break;
 case 'new': hap('light'); openEditor(null); break;
 case 'edit': hap('light'); openEditor(S.tasks.find(function(x){ return x.id===b.dataset.id; })); break;
 case 'done': {
@@ -920,7 +940,13 @@ case 'sethome': hap('light'); openPlacePicker('home'); break;
 case 'nohome': S.settings.home=null; saveSettings(); refreshSettings(); renderHome(); break;
 case 'close': closeSheet(); break;
 case 'cat': D.cat=b.dataset.v; hap('sel'); updCats(); break;
-case 'dday': D.date=b.dataset.k; hap('sel'); updDays(false); updTime(); updQuick(); updRoad(); break;
+case 'eday': { D.date=b.dataset.k; hap('sel'); var md=kdate(D.date); updDays(md.getMonth()===CM.getMonth()?false:true); updTime(); updQuick(); updRoad(); break; }
+case 'emon': CM=addMonths(CM,+b.dataset.d); hap('sel'); updDays(false); break;
+case 'etoday': D.date=todayKey(); hap('sel'); updDays(); updTime(); updQuick(); updRoad(); break;
+case 'monthview': S.monthView=!S.monthView; S.cm=null; hap('sel'); renderHome(); break;
+case 'hday': { S.sel=b.dataset.k; var hm=kdate(S.sel); if(S.cm&&hm.getMonth()!==S.cm.getMonth()) S.cm=null; hap('sel'); renderHome(); break; }
+case 'hmon': S.cm=addMonths(S.cm||monthOf(S.sel),+b.dataset.d); hap('sel'); renderHome(); break;
+case 'htoday': S.sel=todayKey(); S.cm=null; hap('sel'); renderHome(); break;
 case 'dur': D.dur=+b.dataset.v; hap('sel'); updDurs(); updTime(); if(WM==='end') setWheels(); break;
 case 'wm': WM=b.dataset.v; hap('sel'); updTime(); setWheels(); break;
 case 'quick': { var q=quickOpts()[+b.dataset.i]; if(!q) break; D.date=q.k; D.start=q.s; WM='start'; hap('sel'); updDays(); updTime(); updQuick(); setWheels(); updRoad(); break; }
